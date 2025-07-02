@@ -10,7 +10,7 @@ usage() {
     cat << EOF
 IATools
 
-Usage: iatools.sh [options]
+Usage: iatools [options]
 
 Options:
     -h, --help              Display this help message.

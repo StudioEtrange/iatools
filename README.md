@@ -4,11 +4,11 @@ This project provides a set of tools to interact with generative AI models.
 
 ## requirements
 
-* git
+* bash, git
 
 ## Commands
 
-The `iatools.sh <commands>` script provides the following commands:
+The `iatools <commands>` script provides the following commands:
 
 - **-h, --help**: Display the help message.
 - **init**: Install project dependencies.
