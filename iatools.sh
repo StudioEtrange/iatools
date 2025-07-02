@@ -1,0 +1,92 @@
+#!/bin/bash
+_CURRENT_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+_CURRENT_RUNNING_DIR="$( cd "$( dirname "." )" && pwd )"
+
+
+. "${_CURRENT_FILE_DIR}/stella-link.sh" include
+
+# --- USAGE ---
+usage() {
+    cat << EOF
+IATools
+
+Usage: iatools.sh [options]
+
+Options:
+    -h, --help              Display this help message.
+    init                    Install dependencies.
+    gc install              Install Gemini CLI.
+    gc launch               Launch Gemini CLI.
+    gc mcp-context7        Add mcp-context7 server configuration to Gemini CLI.
+    shell                   Enter iatools context and path
+EOF
+}
+
+
+# Main function
+main() {
+    if [ "$#" -eq 0 ]; then
+        usage
+        exit 1
+    fi
+
+    case "$1" in
+        -h|--help)
+            usage
+            ;;
+        init)
+            echo "Install dependencies..."
+            $STELLA_API get_features
+            ;;
+        gc)
+            case "$2" in
+                install)
+                    echo "Installing Gemini CLI..."
+                    npm install -g @google/gemini-cli
+                    ;;
+                launch)
+                    gemini
+                    ;;
+                mcp-context7)
+                    echo "Configuring mcp-context7 for Gemini CLI..."
+                    local_config_file="${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/gemini-cli/settings.json"
+                    gemini_config_file="$HOME/.gemini/settings.json"
+
+                    if [ ! -f "$gemini_config_file" ]; then
+                        echo "Gemini CLI config file not found at $gemini_config_file. Creating it."
+                        mkdir -p "$(dirname "$gemini_config_file")"
+                        echo "{}" > "$gemini_config_file"
+                    fi
+
+                    if [ ! -f "$local_config_file" ]; then
+                        echo "Error: Local config file not found at $local_config_file"
+                        exit 1
+                    fi
+
+                    # Create a temporary file for the merged content
+                    tmp_file=$(mktemp)
+
+                    # Merge the two json files
+                    jq -s '.[0] * .[1]' "$gemini_config_file" "$local_config_file" > "$tmp_file"
+
+                    # Replace the original file with the merged one
+                    mv "$tmp_file" "$gemini_config_file"
+
+                    echo "Configuration for mcp-context7 has been added."
+                    ;;
+            esac
+            ;;
+      
+        shell)
+            $STELLA_API boot_app_shell "local"
+            ;;
+        *)
+            echo "Error: Unknown option $1"
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+# Run main function
+main "$@"
