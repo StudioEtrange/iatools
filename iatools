@@ -24,7 +24,7 @@ Options:
     gc mcp-desktop-commander    Add mcp-desktop-commander server configuration to Gemini CLI.
     ----
     oc install              Install opencode https://github.com/sst/opencode 
-    oc launch
+    oc launch [context folder]
     ----
 
 EOF
@@ -79,7 +79,10 @@ main() {
                     npm install -g opencode-ai@latest 
                 ;;
                 launch)
-                    opencode
+                    if [ ! "$3" = "" ]; then
+                        [ -d "$3" ] && folder="$3"
+                    fi
+                    opencode $folder
                 ;;
             esac
             ;;
