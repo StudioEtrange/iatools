@@ -15,13 +15,47 @@ Usage: iatools [options]
 Options:
     -h, --help              Display this help message.
     init                    Install dependencies.
-    gc install              Install Gemini CLI.
-    gc launch               Launch Gemini CLI.
-    gc mcp-context7        Add mcp-context7 server configuration to Gemini CLI.
     shell                   Enter iatools context and path
+    ----
+    gc install                  Install Gemini CLI.
+    gc launch [context folder]  Launch Gemini CLI.
+    gc mcp-context7             Add mcp-context7 server configuration to Gemini CLI.
+    gc mcp-calculate            Add mcp-calculate server configuration to Gemini CLI.
+    gc mcp-desktop-commander    Add mcp-desktop-commander server configuration to Gemini CLI.
+    ----
+    oc install              Install opencode https://github.com/sst/opencode 
+    oc launch
+    ----
+
 EOF
 }
 
+GEMINI_CONFIG_FILE="$HOME/.gemini/settings.json"
+
+
+merge_gemini_config() {
+    config_file="$1"
+
+    if [ ! -f "$GEMINI_CONFIG_FILE" ]; then
+        echo "Gemini CLI config file not found at $GEMINI_CONFIG_FILE. Creating it."
+        mkdir -p "$(dirname "$GEMINI_CONFIG_FILE")"
+        echo "{}" > "$GEMINI_CONFIG_FILE"
+    fi
+
+    if [ ! -f "$config_file" ]; then
+        echo "Error: config file not found $config_file"
+        exit 1
+    fi
+
+    # Create a temporary file for the merged content
+    tmp_file=$(mktemp)
+
+    # Merge the two json files
+    jq -s '.[0] * .[1]' "$GEMINI_CONFIG_FILE" "$config_file" > "$tmp_file"
+
+    # Replace the original file with the merged one
+    mv "$tmp_file" "$GEMINI_CONFIG_FILE"
+}
 
 # Main function
 main() {
@@ -38,6 +72,17 @@ main() {
             echo "Install dependencies..."
             $STELLA_API get_features
             ;;
+        oc)
+            case "$2" in
+                install)
+                    echo "Installing opencode cli..."
+                    npm install -g opencode-ai@latest 
+                ;;
+                launch)
+                    opencode
+                ;;
+            esac
+            ;;
         gc)
             case "$2" in
                 install)
@@ -45,33 +90,25 @@ main() {
                     npm install -g @google/gemini-cli
                     ;;
                 launch)
+                    if [ ! "$3" = "" ]; then
+                        [ -d "$3" ] && cd "$3"
+                    fi
                     gemini
+                    ;;
+                mcp-desktop-commander)
+                    echo "Configuring mcp-desktop-commander for Gemini CLI..."
+                    merge_gemini_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/desktop-commander/gemini-cli/settings.json"
+                    echo "Configuration for mcp-desktop-commander has been added."
+                    ;;
+                mcp-calculator)
+                    pip install mcp-server-calculator
+                    echo "Configuring mcp-calculator for Gemini CLI..."
+                    merge_gemini_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/gemini-cli/settings.json"
+                    echo "Configuration for mcp-calculator has been added."
                     ;;
                 mcp-context7)
                     echo "Configuring mcp-context7 for Gemini CLI..."
-                    local_config_file="${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/gemini-cli/settings.json"
-                    gemini_config_file="$HOME/.gemini/settings.json"
-
-                    if [ ! -f "$gemini_config_file" ]; then
-                        echo "Gemini CLI config file not found at $gemini_config_file. Creating it."
-                        mkdir -p "$(dirname "$gemini_config_file")"
-                        echo "{}" > "$gemini_config_file"
-                    fi
-
-                    if [ ! -f "$local_config_file" ]; then
-                        echo "Error: Local config file not found at $local_config_file"
-                        exit 1
-                    fi
-
-                    # Create a temporary file for the merged content
-                    tmp_file=$(mktemp)
-
-                    # Merge the two json files
-                    jq -s '.[0] * .[1]' "$gemini_config_file" "$local_config_file" > "$tmp_file"
-
-                    # Replace the original file with the merged one
-                    mv "$tmp_file" "$gemini_config_file"
-
+                    merge_gemini_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/gemini-cli/settings.json"
                     echo "Configuration for mcp-context7 has been added."
                     ;;
             esac
