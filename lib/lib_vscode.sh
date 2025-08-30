@@ -49,7 +49,15 @@ vscode_settings_configure() {
 
 vscode_settings_remove() {
     # remove gemini cli path
-    vscode_settings_remove_path "$(command -v gemini | xargs dirname)"
+    # NOTE : gemini cli is not in path anymore
+    #vscode_settings_remove_path "$(command -v gemini | xargs dirname)"
+    $STELLA_API feature_info "nodejs" "NODEJS"
+    if [ ! -z "$NODEJS_FEAT_INSTALL_ROOT" ]; then
+        nodejs_bin_path="${NODEJS_FEAT_INSTALL_ROOT}/bin"
+        vscode_settings_remove_path "^$nodejs_bin_path" "REMOVE_REGEXP"
+    fi
+
+    
 }
 
 vscode_settings_add_path() {
@@ -61,7 +69,6 @@ vscode_settings_add_path() {
     mode="${2:-ALWAYS_PREPEND}" 
     vscode_settings_set_path "$VSCODE_CONFIG_FILE" "$path_expression_to_add" "$mode"
 }
-
 
 vscode_settings_remove_path() {
     path_expression_to_remove="$1"

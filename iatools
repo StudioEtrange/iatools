@@ -113,7 +113,7 @@ main() {
                     ;;
                 reset)
                     echo "Resetting Gemini CLI configuration ..." 
-                    gemini_settings_configure
+                    gemini_settings_remove
                     vscode_settings_remove
                     ;;
                 launch)
