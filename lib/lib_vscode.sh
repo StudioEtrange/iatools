@@ -1,9 +1,12 @@
 
 
 vscode_files() {
+
+    [ "$TERM_PROGRAM" = "vscode" ] && echo "We are running inside a VSCode terminal"
+
     # vscode files
     if [ -d "$HOME/.vscode-server/data/Machine" ]; then
-        echo "Detected VSCode Server environment. You are likely using VSCode Remote - SSH or WSL."
+        # "VSCode Remote - SSH or WSL config file"
         export VSCODE_CONFIG_FILE="$HOME/.vscode-server/data/Machine/settings.json"
     else
         # https://code.visualstudio.com/docs/configure/settings
@@ -17,102 +20,36 @@ vscode_files() {
 vscode_settings_configure() {
     merge_json_file "${_CURRENT_FILE_DIR}/pool/settings/gemini-cli/vscode-settings.json" "$VSCODE_CONFIG_FILE"
 
-    # add env:PATH
+
+    # A/ add ${env:PATH} --------------
     vscode_settings_add_path '${env:PATH}' "POSTPEND_IF_NOT_EXISTS"
-    # gemini cli path
+    
+    # B/ code remote-cli PATH --------------
+    #   when "terminal.integrated.env.linux".PATH on remote is empty, vscode remote-cli code path is auto added to PATH variable in terminal
+    #   when "terminal.integrated.env.linux".PATH on remote is defined, vscode remote-cli code path is NOT auto added to PATH variable in terminal
+    #       (the value of "terminal.integrated.inheritEnv" do not change this behavior)
+    #   so we add it manually because this script always set "terminal.integrated.env.linux".PATH which will never be empty anymore
+    
+    # remote-cli code is in $HOME/.vscode-server/cli/servers/Stable-<commit>/server/bin/remote-cli/code
+    # to select the latest vscode version, pick one of these :
+    #       - use $HOME/.vscode-server/cli/servers/lru.json wich stores the last used vscode version
+    #       - filter ls result ordered by date $HOME/.vscode-server/cli/servers/Stable-*
+    #       - filter value of VSCODE_GIT_ASKPASS_NODE env variable setted by the core Git extension 
+    if [ -d "$HOME/.vscode-server/cli/servers" ] && [ "$(ls -A "$HOME/.vscode-server/cli/servers/Stable-"* 2>/dev/null)" ]; then
+        vscode_remote_home="$(ls -1dt "$HOME/.vscode-server/cli/servers/Stable-"* | head -n 1 | xargs -I {} echo {}/server)"
+        vscode_remote_cli_path="$vscode_remote_home/bin/remote-cli"
+
+        vscode_settings_remove_path "^$HOME/.vscode-server/cli/servers/Stable-.*" "REMOVE_REGEXP"
+        [ -d "$vscode_remote_cli_path" ] && vscode_settings_add_path "$vscode_remote_cli_path" "ALWAYS_PREPEND"
+    fi
+
+    # C/ gemini cli path --------------
     vscode_settings_add_path "$(command -v gemini | xargs dirname)" "ALWAYS_PREPEND"
 }
 
 vscode_settings_remove() {
     # remove gemini cli path
     vscode_settings_remove_path "$(command -v gemini | xargs dirname)"
-}
-
-vscode_settings_set_path() {
-    vscode_settings_file="$1"
-    path_expression="$2"
-    # ALWAYS_PREPEND add path or move it at the beginning position
-    # ALWAYS_POSTPEND add path or move it at the end position
-    # PREPEND_IF_NOT_EXISTS add path at the beginning position only if not already present
-    # POSTPEND_IF_NOT_EXISTS add path at the end position only if not already present
-    mode="${3:-ALWAYS_PREPEND}" 
-
-    if [ ! -s "$vscode_settings_file" ]; then
-        echo "Valid target file not found at $vscode_settings_file. Creating it."
-        mkdir -p "$(dirname "$vscode_settings_file")"
-        echo "{}" > "$vscode_settings_file"
-    fi
-
-    tmp_file=$(mktemp)
-
-    jq --arg set_path "$path_expression" --arg mode "$mode" '
-
-    # replace ":" inside ${...} with \u0001
-    def shield:
-        gsub("\\$\\{env:(?<var>[^}]+)\\}"; "${env\u0001" + .var + "}");
-
-    # restore ":"
-    def unshield:
-        gsub("\u0001"; ":");
-
-    # split by ":" but keep ${...} together
-    def split_keep_vars:
-        ( . | shield | split(":") | map(unshield) );
-    
-    def process:
-        if $mode != "REMOVE" then
-            if . == null or . == "" then
-                $set_path
-            else
-                if $mode == "ALWAYS_PREPEND" then
-                    ( split_keep_vars
-                        | map(select(. != "" and . != $set_path))
-                        | [$set_path] + .
-                        | join(":")
-                    )
-                elif $mode == "ALWAYS_POSTPEND" then
-                    ( split_keep_vars
-                        | map(select(. != "" and . != $set_path))
-                        | . + [$set_path]
-                        | join(":")
-                    )
-                elif $mode == "PREPEND_IF_NOT_EXISTS" then
-                    if (index($set_path) == null) then
-                        ( split_keep_vars
-                            | map(select(. != "" and . != $set_path))
-                            | [$set_path] + .
-                            | join(":")
-                        )
-                    end
-                elif $mode == "POSTPEND_IF_NOT_EXISTS" then
-                    if (index($set_path) == null) then
-                        ( split_keep_vars
-                            | map(select(. != "" and . != $set_path))
-                            | . + [$set_path]
-                            | join(":")
-                        )
-                    end
-                end
-            end
-        else
-            if (index($set_path) != null) then
-                ( split_keep_vars
-                    | map(select(. != "" and . != $set_path))
-                    | join(":")
-                )
-            end
-        end;
-
-    # linux
-    .["terminal.integrated.env.linux"] = (.["terminal.integrated.env.linux"] // {}) |
-    .["terminal.integrated.env.linux"].PATH |= process
-    |
-    # osx
-    .["terminal.integrated.env.osx"] = (.["terminal.integrated.env.osx"] // {}) |
-    .["terminal.integrated.env.osx"].PATH |= process
-
-    ' "$vscode_settings_file" > "$tmp_file"
-    mv "$tmp_file" "$vscode_settings_file"
 }
 
 vscode_settings_add_path() {
@@ -128,5 +65,124 @@ vscode_settings_add_path() {
 
 vscode_settings_remove_path() {
     path_expression_to_remove="$1"
-    vscode_settings_set_path "$VSCODE_CONFIG_FILE" "$path_expression_to_remove" "REMOVE"
+    # REMOVE remove all occurences of a fix expression
+    # REMOVE_REGEXP remove all occurences of an regexp expression
+    mode="${2:-REMOVE}"
+    vscode_settings_set_path "$VSCODE_CONFIG_FILE" "$path_expression_to_remove" "$mode"
+}
+
+
+vscode_settings_set_path() {
+    vscode_settings_file="$1"
+    path_expression="$2"
+    # ALWAYS_PREPEND add path or move it at the beginning position
+    # ALWAYS_POSTPEND add path or move it at the end position
+    # PREPEND_IF_NOT_EXISTS add path at the beginning position only if not already present
+    # POSTPEND_IF_NOT_EXISTS add path at the end position only if not already present
+    # REMOVE remove all occurences of a fix expression
+    # REMOVE_REGEXP remove all occurences of an regexp expression
+    mode="${3:-ALWAYS_PREPEND}"
+
+    if [ ! -s "$vscode_settings_file" ]; then
+        echo "Valid target file not found at $vscode_settings_file. Creating it."
+        mkdir -p "$(dirname "$vscode_settings_file")"
+        echo "{}" > "$vscode_settings_file"
+    fi
+
+    tmp_file=$(mktemp)
+
+    jq --arg set_path "$path_expression" --arg mode "$mode" '
+
+    # replace ":" inside ${...} with \u0001
+    def shield:
+        if (type=="string") then
+            gsub("\\$\\{env:(?<var>[^}]+)\\}"; "${env\u0001" + .var + "}")
+        else
+            .
+        end;
+
+    # restore ":"
+    def unshield:
+        if (type=="string") then gsub("\u0001"; ":") else . end;
+
+    # split by ":" but keep ${...} together
+    def split_keep_vars:
+        if (type!="string") or (.=="") then 
+            [] 
+        else 
+            ( . | shield | split(":") | map(unshield) )
+        end;
+
+    
+    def process:
+        if ($mode | startswith("REMOVE") | not) then
+            if . == null or . == "" then
+                $set_path
+            else
+                if $mode == "ALWAYS_PREPEND" then
+                    ( split_keep_vars
+                        | map(select(. != "" and . != $set_path))
+                        | [$set_path] + .
+                        | join(":")
+                    )
+                elif $mode == "ALWAYS_POSTPEND" then
+                    ( split_keep_vars
+                        | map(select(. != "" and . != $set_path))
+                        | . + [$set_path]
+                        | join(":")
+                    )
+                 elif $mode == "PREPEND_IF_NOT_EXISTS" then
+                    (split_keep_vars) as $parts |
+                    if ($parts | index($set_path)) then 
+                        . 
+                    else 
+                        ( [$set_path] + $parts | join(":") ) 
+                    end
+                elif $mode == "POSTPEND_IF_NOT_EXISTS" then
+                    (split_keep_vars) as $parts |
+                    if ($parts | index($set_path)) then 
+                        . 
+                    else 
+                        ($parts + [$set_path] | join(":")) 
+                    end
+                else
+                    .
+                end
+            end
+        else
+            if . == null or . == "" then
+                .
+            else
+                if $mode == "REMOVE" then
+                    ( split_keep_vars
+                        | map(select(. != "" and . != $set_path))
+                        | join(":")
+                    )
+                elif $mode == "REMOVE_REGEXP" then
+                    ( split_keep_vars
+                        | map(select(. != "" and (. | test($set_path) | not)))
+                        | join(":")
+                    )
+                else
+                    .
+                end
+            end
+        end;
+
+    # linux
+    .["terminal.integrated.env.linux"] = (.["terminal.integrated.env.linux"] // {}) |
+    .["terminal.integrated.env.linux"].PATH |= process
+    |
+    # osx
+    .["terminal.integrated.env.osx"] = (.["terminal.integrated.env.osx"] // {}) |
+    .["terminal.integrated.env.osx"].PATH |= process
+
+    ' "$vscode_settings_file" > "$tmp_file"
+    if [ $? -ne 0 ]; then
+        echo "Error processing with jq"
+        rm -f "$tmp_file"
+        exit 1
+    else
+        mv "$tmp_file" "$vscode_settings_file"
+    fi
 }
