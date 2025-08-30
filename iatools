@@ -4,6 +4,8 @@ _CURRENT_RUNNING_DIR="$( cd "$( dirname "." )" && pwd )"
 
 
 . "${_CURRENT_FILE_DIR}/stella-link.sh" include
+. "${_CURRENT_FILE_DIR}/lib/lib_vscode.sh"
+. "${_CURRENT_FILE_DIR}/lib/lib_gemini.sh"
 
 # --- USAGE ---
 usage() {
@@ -17,33 +19,41 @@ Options:
     init                    Install dependencies.
     shell                   Enter iatools context and path
     ----
-    gc install                  Install Gemini CLI.
+    gc install                  Install and configure Gemini CLI. (if asked to relaunch gemini cli, use 'iatools gc launch' command)
+    gc uninstall                Uninstall Gemini CLI (keeping all configuration unchanged. to remove configuration use 'iatools gc reset' command)
+    gc reset                    Reset all Gemini CLI configuration, need to reinstall it to reconfigure it.
     gc launch [context folder]  Launch Gemini CLI.
     gc mcp-context7             Add mcp-context7 server configuration to Gemini CLI.
     gc mcp-calculate            Add mcp-calculate server configuration to Gemini CLI.
     gc mcp-desktop-commander    Add mcp-desktop-commander server configuration to Gemini CLI.
+    gc mcp-github               Add mcp-github server configuration to Gemini CLI.
     ----
-    oc install              Install opencode https://github.com/sst/opencode 
-    oc launch [context folder]
+    oc install                  Install opencode https://github.com/sst/opencode 
+    oc launch [context folder]  Launch opencode.
     ----
 
 EOF
 }
 
-GEMINI_CONFIG_FILE="$HOME/.gemini/settings.json"
 
 
-merge_gemini_config() {
-    config_file="$1"
+settings_files() {
+    gemini_files
+    vscode_files
+}
 
-    if [ ! -f "$GEMINI_CONFIG_FILE" ]; then
-        echo "Gemini CLI config file not found at $GEMINI_CONFIG_FILE. Creating it."
-        mkdir -p "$(dirname "$GEMINI_CONFIG_FILE")"
-        echo "{}" > "$GEMINI_CONFIG_FILE"
+merge_json_file() {
+    file_to_merge="$1"
+    target_file="$2"
+
+    if [ ! -s "$target_file" ]; then
+        echo "Valid target file not found at $target_file. Creating it."
+        mkdir -p "$(dirname "$target_file")"
+        echo "{}" > "$target_file"
     fi
 
-    if [ ! -f "$config_file" ]; then
-        echo "Error: config file not found $config_file"
+    if [ ! -f "$file_to_merge" ]; then
+        echo "Error: file to merge not found $file_to_merge"
         exit 1
     fi
 
@@ -51,11 +61,12 @@ merge_gemini_config() {
     tmp_file=$(mktemp)
 
     # Merge the two json files
-    jq -s '.[0] * .[1]' "$GEMINI_CONFIG_FILE" "$config_file" > "$tmp_file"
+    jq -s '.[0] * .[1]' "$target_file" "$file_to_merge" > "$tmp_file"
 
     # Replace the original file with the merged one
-    mv "$tmp_file" "$GEMINI_CONFIG_FILE"
+    mv "$tmp_file" "$target_file"
 }
+
 
 # Main function
 main() {
@@ -91,6 +102,19 @@ main() {
                 install)
                     echo "Installing Gemini CLI..."
                     npm install -g @google/gemini-cli
+
+                    echo "Configuring Gemini CLI ..." 
+                    gemini_settings_configure
+                    vscode_settings_configure
+                    ;;
+                uninstall)
+                    echo "Uninstalling Gemini CLI (keeping all configuration unchanged. to remove configuration use 'reset' command) ..." 
+                    npm uninstall -g @google/gemini-cli
+                    ;;
+                reset)
+                    echo "Resetting Gemini CLI configuration ..." 
+                    gemini_settings_configure
+                    vscode_settings_remove
                     ;;
                 launch)
                     if [ ! "$3" = "" ]; then
@@ -100,19 +124,24 @@ main() {
                     ;;
                 mcp-desktop-commander)
                     echo "Configuring mcp-desktop-commander for Gemini CLI..."
-                    merge_gemini_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/desktop-commander/gemini-cli/settings.json"
+                    gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/desktop-commander/gemini-cli/settings.json"
                     echo "Configuration for mcp-desktop-commander has been added."
                     ;;
                 mcp-calculator)
                     pip install mcp-server-calculator
                     echo "Configuring mcp-calculator for Gemini CLI..."
-                    merge_gemini_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/gemini-cli/settings.json"
+                    gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/gemini-cli/settings.json"
                     echo "Configuration for mcp-calculator has been added."
                     ;;
                 mcp-context7)
                     echo "Configuring mcp-context7 for Gemini CLI..."
-                    merge_gemini_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/gemini-cli/settings.json"
+                    gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/gemini-cli/settings.json"
                     echo "Configuration for mcp-context7 has been added."
+                    ;;
+                mcp-github)
+                    echo "Configuring mcp-github for Gemini CLI..."
+                    gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/github/gemini-cli/settings.json"
+                    echo "Configuration for mcp-github has been added."
                     ;;
             esac
             ;;
@@ -127,6 +156,9 @@ main() {
             ;;
     esac
 }
+
+
+settings_files
 
 # Run main function
 main "$@"

@@ -14,7 +14,7 @@ The `iatools <commands>` script provides the following commands:
 - **init**: Install project dependencies.
 - **gc install**: Install the Gemini CLI.
 - **gc launch**: Launch the Gemini CLI.
-- **gc mcp-context7**: Add the mcp-context7 server configuration to the Gemini CLI. https://mcpmarket.com/server/context7-1
+- **gc mcp-context7**: https://mcpmarket.com/server/context7-1 [README](pool/mcp-servers/context7/README.md)
 - **gc mcp-calculator**: https://mcpservers.org/servers/githejie/mcp-server-calculator
 - **gc mcp-desktop-commander**: https://github.com/wonderwhy-er/desktopcommandermcp
 - **shell**: Enter the iatools context and path.
@@ -22,4 +22,13 @@ The `iatools <commands>` script provides the following commands:
 
 ## mcp servers
 
-* catalog : https://mcpmarket.com/
+* catalog : 
+  * https://mcpmarket.com/
+  * https://www.pulsemcp.com/servers?sort=popular-total-desc
+
+
+
+## gemini-cli
+
+
+* if you install vscode extension with /ide install and have problem, just close and relaunch vscode
