@@ -2,6 +2,10 @@
 
 This project provides a set of tools to interact with generative AI models.
 
+* Maain features
+  * gemini-cli management, installation, configuration ... - https://google-gemini.github.io/gemini-cli
+  * opencode cli management, installation, configuration ... - https://opencode.ai
+
 - [IATools](#iatools)
   - [Requirements](#requirements)
   - [Commands](#commands)
@@ -59,6 +63,8 @@ The `iatools <commands>` script provides the following commands:
   * Other Manual Installation : https://marketplace.visualstudio.com/items?itemName=Google.gemini-cli-vscode-ide-companion
 
 * saved chat history is in $HOME/.gemini/tmp
+
+* Gemini CLI supports MCP Prompts as slash commands
 
 ## opencode cli
 
@@ -125,3 +131,5 @@ The `iatools <commands>` script provides the following commands:
 ## TODO
 
 * llxprt : gemini-cli fork : https://github.com/acoliver/llxprt-code
+* kilocode and roocode can use gemini-cli as LLM provider
+* kilocode vsextension config home : $HOME/.vscode-server/data/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json
