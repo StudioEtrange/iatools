@@ -32,6 +32,7 @@ Options:
     gc mcp-calculator install|uninstall         Add mcp-calculator local server configuration.
     gc mcp-desktop-commander install|uninstall  Add mcp-desktop-commander local server configuration.
     gc mcp-github install|uninstall             Add mcp-github remote server configuration.
+    gc cmd-plan install|uninstall               Add /plan command
     ----
     oc : opencode - https://opencode.ai
     oc install                          Install and configure Opencode.
@@ -263,6 +264,16 @@ main() {
                         gemini
                     fi
                     ;;
+                cmd-plan)
+                    case "$1" in
+                        "install")
+                            gemini_add_command "${_CURRENT_FILE_DIR}/pool/cmd/plan/plan.toml"
+                            ;;
+                        "uninstall")
+                            gemini_remove_command "plan.toml"
+                            ;;
+                    esac
+                    ;;
                 mcp-desktop-commander)
                     case "$1" in
                         "install")
@@ -279,6 +290,7 @@ main() {
                 mcp-calculator)
                     case "$1" in
                         "install")
+                            pip install mcp-server-calculator
                             echo "Configuring mcp-calculator ..."
                             gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/gemini-cli/settings.json"
                             echo "Configuration for mcp-calculator has been added."
