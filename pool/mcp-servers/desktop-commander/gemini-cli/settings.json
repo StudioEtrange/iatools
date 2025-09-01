@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "desktop-commander": {
+      "command": "${NODEJS_BIN_PATH}npx",
+      "args": [
+        "-y",
+        "@wonderwhy-er/desktop-commander"
+      ]
+    }
+  }
+}
