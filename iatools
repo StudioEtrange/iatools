@@ -1,0 +1,342 @@
+#!/bin/bash
+_CURRENT_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+_CURRENT_RUNNING_DIR="$( cd "$( dirname "." )" && pwd )"
+
+
+. "${_CURRENT_FILE_DIR}/stella-link.sh" include
+. "${_CURRENT_FILE_DIR}/lib/lib.sh"
+. "${_CURRENT_FILE_DIR}/lib/lib_vscode.sh"
+. "${_CURRENT_FILE_DIR}/lib/lib_gemini.sh"
+. "${_CURRENT_FILE_DIR}/lib/lib_opencode.sh"
+
+# --- USAGE ---
+usage() {
+    cat << EOF
+IATools
+
+Usage: iatools [options]
+
+Options:
+    init                    Install dependencies.
+    help                    Display this help message.
+    shell                   Enter iatools context and path
+    ----
+    gc : gemini-cli - https://google-gemini.github.io/gemini-cli
+    gc install                      Install and configure Gemini CLI. (if asked to relaunch gemini cli, use 'iatools gc launch' command)
+    gc uninstall                    Uninstall Gemini CLI (keeping all configuration unchanged. to remove configuration use 'iatools gc reset' command)
+    gc configure                    Configure Gemini CLI. ('iatools gc install' include configuration)
+    gc reset                        Reset all Gemini CLI configuration.
+    gc launch [context folder] -- <other gemini options>
+                                    Launch Gemini CLI.
+    gc mcp-context7 install|uninstall           Add mcp-context7 local server configuration.
+    gc mcp-calculator install|uninstall         Add mcp-calculator local server configuration.
+    gc mcp-desktop-commander install|uninstall  Add mcp-desktop-commander local server configuration.
+    gc mcp-github install|uninstall             Add mcp-github remote server configuration.
+    ----
+    oc : opencode - https://opencode.ai
+    oc install                          Install and configure Opencode.
+    oc uninstall                        Uninstall Opencode (keeping all configuration unchanged. to remove configuration use 'iatools oc reset' command)
+    oc configure                        Configure Opencode. ('iatools oc install' include configuration)
+    oc reset                            Reset all Opencode configuration.
+    oc launch [context folder] -- <other opencode options>
+                                        Launch Opencode.
+    oc mcp-context7 install|uninstall           Add mcp-context7 local server configuration.
+    oc mcp-calculator install|uninstall         Add mcp-calculator local server configuration.
+    oc mcp-github install|uninstall             Add mcp-github remote server configuration.
+    ----
+
+EOF
+}
+
+
+settings_files() {
+    gemini_files
+    opencode_files
+    vscode_files
+}
+
+runtime_path() {
+    # used by gemini, opencode and several MCP local server
+    $STELLA_API feature_info "nodejs" "NODEJS"
+    [ ! -z "$NODEJS_FEAT_INSTALL_ROOT" ] && export NODEJS_BIN_PATH="${NODEJS_FEAT_INSTALL_ROOT}/bin/" \
+                                    || export NODEJS_BIN_PATH=""
+
+    # used by MCP local server
+    $STELLA_API feature_info "miniforge" "MINIFORGE"
+    [ ! -z "$MINIFORGE_FEAT_INSTALL_ROOT" ] && export PYTHON_BIN_PATH="${MINIFORGE_FEAT_INSTALL_ROOT}/bin/" \
+                                    || export PYTHON_BIN_PATH=""
+}
+
+
+# Main function
+main() {
+    if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
+        usage
+        exit 0
+    fi
+
+    if [ "$#" -eq 0 ]; then
+        usage
+        exit 1
+    fi
+
+    local command=$1
+    shift
+    case "$command" in
+        help)
+            usage
+            exit 0
+            ;;
+        init)
+            echo "Install dependencies..."
+            $STELLA_API get_features
+            ;;
+        oc)
+            local sub_command=$1
+            shift
+            case "$sub_command" in
+                install)
+                    echo "Installing Opencode CLI..."
+                    npm install -g opencode-ai@latest
+                
+                    echo "Configuring Opencode CLI ..."
+                    opencode_settings_configure
+                    vscode_settings_configure "opencode"
+                    ;;
+                uninstall)
+                    echo "Uninstalling Opencode (keeping all configuration unchanged. to remove configuration use reset command) ..."
+                    npm uninstall -g opencode-ai
+                    ;;
+                configure)
+                    echo "Configuring Opencode CLI ..."
+                    opencode_settings_configure
+                    vscode_settings_configure "opencode"
+                    ;;
+                reset)
+                    echo "Resetting Opencode configuration ..."
+                    opencode_settings_remove
+                    vscode_settings_remove
+                    ;;
+                launch)
+                    local folder=
+                    local list_args=()
+                    local dash_found=0
+                    case "$1" in
+                        "--" | "");;
+                        *)
+                            folder="$1"
+                            shift
+                            ;;
+                    esac
+                    for arg in "$@"; do
+                        if [ "$dash_found" -eq 1 ]; then
+                            list_args+=("$arg")
+                        elif [ "$arg" == "--" ]; then
+                            dash_found=1
+                        fi
+                    done
+                    case "$folder" in
+                        "")
+                            if [ ${#list_args[@]} -gt 0 ]; then
+                                opencode "${list_args[@]}"
+                            else
+                                opencode
+                            fi
+                            ;;
+                        *)
+                            if [ -d "$folder" ]; then
+                                if [ ${#list_args[@]} -gt 0 ]; then
+                                    opencode "$folder" "${list_args[@]}"
+                                else
+                                    opencode "$folder"
+                                fi
+                             else
+                                echo "Error: Directory '$folder' not found."
+                                exit 1
+                            fi
+                            ;;
+                    esac
+                    ;;
+                mcp-calculator)
+                    case "$1" in
+                        "install")
+                            pip install mcp-server-calculator
+                            echo "Configuring mcp-calculator ..."
+                            opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/opencode/opencode.json"
+                            echo "Configuration for mcp-calculator has been added."
+                            ;;
+                        "uninstall")
+                            echo "Removing mcp-calculator ..."
+                            pip uninstall -y mcp-server-calculator
+                            opencode_remove_config "mcp.calculator"
+                            ;;
+                    esac
+                    ;;
+                mcp-context7)
+                    case "$1" in
+                        "install")
+                            echo "Configuring mcp-context7 ..."
+                            opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/opencode/opencode.json"
+                            echo "Configuration for mcp-context7 has been added."
+                            ;;
+                        "uninstall")
+                            echo "Removing mcp-context7 ..."
+                            opencode_remove_config "mcp.context7"
+                            ;;
+                    esac
+                    ;;
+                mcp-github)
+                    case "$1" in
+                        "install")
+                            echo "Configuring mcp-github ..."
+                            opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/github/opencode/opencode.json"
+                            echo "Configuration for mcp-github has been added."
+                            ;;
+                        "uninstall")
+                            echo "Removing mcp-github ..."
+                            opencode_remove_config "mcp.github"
+                            ;;
+                    esac
+                    ;;
+                *)
+                    echo "Error: Unknown command $sub_command for oc"
+                    usage
+                    exit 1
+                    ;;
+            esac
+            ;;
+        gc)
+            local sub_command=$1
+            shift
+            case "$sub_command" in
+                install)
+                    echo "Installing Gemini CLI..."
+                    npm install -g @google/gemini-cli
+
+                    echo "Configuring Gemini CLI ..."
+                    gemini_settings_configure
+                    vscode_settings_configure "gemini"
+                    ;;
+                uninstall)
+                    echo "Uninstalling Gemini CLI (keeping all configuration unchanged. to remove configuration use reset command) ..."
+                    npm uninstall -g @google/gemini-cli
+                    ;;
+                configure)
+                    echo "Configuring Gemini CLI ..."
+                    gemini_settings_configure
+                    vscode_settings_configure "gemini"
+                    ;;
+                reset)
+                    echo "Resetting Gemini CLI configuration ..."
+                    gemini_settings_remove
+                    vscode_settings_remove
+                    ;;
+                launch)
+                    local folder=
+                    local list_args=()
+                    local dash_found=0
+                    case "$1" in
+                        "--" | "");;
+                        *)
+                            folder="$1"
+                            shift
+                            ;;
+                    esac
+                    for arg in "$@"; do
+                        if [ "$dash_found" -eq 1 ]; then
+                            list_args+=("$arg")
+                        elif [ "$arg" == "--" ]; then
+                            dash_found=1
+                        fi
+                    done
+                    if [ ! -z "$folder" ]; then
+                        if [ -d "$folder" ]; then
+                            cd "$folder"
+                        else
+                            echo "Error: Directory '$folder' not found."
+                            exit 1
+                        fi
+                    fi
+                    if [ ${#list_args[@]} -gt 0 ]; then
+                        gemini "${list_args[@]}"
+                    else
+                        gemini
+                    fi
+                    ;;
+                mcp-desktop-commander)
+                    case "$1" in
+                        "install")
+                            echo "Configuring mcp-desktop-commander ..."
+                            gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/desktop-commander/gemini-cli/settings.json"
+                            echo "Configuration for mcp-desktop-commander has been added."
+                            ;;
+                        "uninstall")
+                            echo "Removing mcp-desktop-commander ..."
+                            gemini_remove_config "mcpServers.desktop-commander"
+                            ;;
+                    esac
+                    ;;
+                mcp-calculator)
+                    case "$1" in
+                        "install")
+                            echo "Configuring mcp-calculator ..."
+                            gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/gemini-cli/settings.json"
+                            echo "Configuration for mcp-calculator has been added."
+                            ;;
+                        "uninstall")
+                            echo "Removing mcp-calculator ..."
+                            pip uninstall -y mcp-server-calculator
+                            gemini_remove_config "mcpServers.calculator"
+                            ;;
+                    esac
+                    ;;
+                mcp-context7)
+                    case "$1" in
+                        "install")
+                            echo "Configuring mcp-context7 ..."
+                            gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/gemini-cli/settings.json"
+                            echo "Configuration for mcp-context7 has been added."
+                            ;;
+                        "uninstall")
+                            echo "Removing mcp-context7 ..."
+                            gemini_remove_config "mcpServers.context7"
+                            ;;
+                    esac
+                    ;;
+                mcp-github)
+                    case "$1" in
+                        "install")
+                            echo "Configuring mcp-github ..."
+                            gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/github/gemini-cli/settings.json"
+                            echo "Configuration for mcp-github has been added."
+                            ;;
+                        "uninstall")
+                            echo "Removing mcp-github ..."
+                            gemini_remove_config "mcpServers.github"
+                            ;;
+                    esac
+                    ;;
+                *)
+                    echo "Error: Unknown command $sub_command for gc"
+                    usage
+                    exit 1
+                    ;;
+            esac
+            ;;
+
+        shell)
+            $STELLA_API boot_app_shell "local"
+            ;;
+        *)
+            echo "Error: Unknown command $command"
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+
+settings_files
+runtime_path
+
+main "$@"

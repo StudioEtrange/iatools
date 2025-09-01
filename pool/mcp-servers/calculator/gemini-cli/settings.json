@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "calculator": {
+            "command": "${PYTHON_BIN_PATH}python",
+            "args": [
+                "-m",
+                "mcp_server_calculator"
+            ]
+        }
+    }
+}

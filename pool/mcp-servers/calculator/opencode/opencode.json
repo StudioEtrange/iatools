@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "calculator": {
+      "type": "local",
+      "command": ["${PYTHON_BIN_PATH}python", "-m", "mcp_server_calculator"],
+      "enabled": true
+    }
+  }
+}
