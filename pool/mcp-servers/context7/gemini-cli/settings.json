@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "context7": {
-      "command": "${NODEJS_BIN_PATH}npx",
+      "command": "${IATOOLS_NODEJS_BIN_PATH}npx",
       "args": ["-y", "@upstash/context7-mcp"]
     }
   }
