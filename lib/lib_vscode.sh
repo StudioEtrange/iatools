@@ -1,18 +1,18 @@
 
 
-vscode_files() {
+vscode_path() {
     [ "$TERM_PROGRAM" = "vscode" ] && echo "We are running inside a VSCode terminal"
 
-    # vscode files
+    # vscode pecific paths
     if [ -d "$HOME/.vscode-server/data/Machine" ]; then
         # "VSCode Remote - SSH or WSL config file"
-        export VSCODE_CONFIG_FILE="$HOME/.vscode-server/data/Machine/settings.json"
+        export IATOOLS_VSCODE_CONFIG_FILE="$HOME/.vscode-server/data/Machine/settings.json"
     else
         # https://code.visualstudio.com/docs/configure/settings
         #   Windows %APPDATA%\Code\User\settings.json
         #   macOS $HOME/Library/Application\ Support/Code/User/settings.json
         #   Linux $HOME/.config/Code/User/settings.json
-        export VSCODE_CONFIG_FILE="$HOME/.config/Code/User/settings.json"
+        export IATOOLS_VSCODE_CONFIG_FILE="$HOME/.config/Code/User/settings.json"
     fi
 }
 
@@ -21,10 +21,10 @@ vscode_settings_configure() {
 
     case "$target" in
         "gemini" )
-            merge_json_file "${_CURRENT_FILE_DIR}/pool/settings/gemini-cli/settings-for-vscode.json" "$VSCODE_CONFIG_FILE"
+            merge_json_file "${_CURRENT_FILE_DIR}/pool/settings/gemini-cli/settings-for-vscode.json" "$IATOOLS_VSCODE_CONFIG_FILE"
         ;;
         "opencode" )
-            merge_json_file "${_CURRENT_FILE_DIR}/pool/settings/opencode/settings-for-vscode.json" "$VSCODE_CONFIG_FILE"
+            merge_json_file "${_CURRENT_FILE_DIR}/pool/settings/opencode/settings-for-vscode.json" "$IATOOLS_VSCODE_CONFIG_FILE"
         ;;
     esac
 
@@ -53,21 +53,29 @@ vscode_settings_configure() {
     # C/ specific cli path --------------
     case "$target" in
         "gemini" )
-            vscode_settings_add_path "${NODEJS_BIN_PATH}" "ALWAYS_PREPEND"
+            vscode_settings_add_path "${IATOOLS_GEMINI_LAUNCHER_HOME}" "ALWAYS_PREPEND"
+            #vscode_settings_add_path "${IATOOLS_NODEJS_BIN_PATH}" "ALWAYS_PREPEND"
             #vscode_settings_add_path "$(command -v gemini | xargs dirname)" "ALWAYS_PREPEND"
         ;;
         "opencode" )
-            vscode_settings_add_path "${NODEJS_BIN_PATH}" "ALWAYS_PREPEND"
+            vscode_settings_add_path "${IATOOLS_OPENCODE_LAUNCHER_HOME}" "ALWAYS_PREPEND"
+            #vscode_settings_add_path "${IATOOLS_NODEJS_BIN_PATH}" "ALWAYS_PREPEND"
             #vscode_settings_add_path "$(command -v opencode | xargs dirname)" "ALWAYS_PREPEND"
         ;;
     esac
 }
 
 vscode_settings_remove() {
-    vscode_settings_remove_path "NODEJS_BIN_PATH" "REMOVE"
-    echo "!! WARN : nodejs path $NODEJS_BIN_PATH will be removed from vscode terminal path"
-    echo "          THIS could impact other vscode tools integration, you may have to relaunch configure step"
-    
+    target="$1"
+
+    case "$target" in
+        "gemini" )
+           vscode_settings_remove_path "${IATOOLS_GEMINI_LAUNCHER_HOME}" "REMOVE"
+        ;;
+        "opencode" )
+            vscode_settings_remove_path "${IATOOLS_OPENCODE_LAUNCHER_HOME}" "REMOVE"
+        ;;
+    esac
 }
 
 vscode_settings_add_path() {
@@ -77,7 +85,7 @@ vscode_settings_add_path() {
     # PREPEND_IF_NOT_EXISTS add path at the beginning position only if not already present
     # POSTPEND_IF_NOT_EXISTS add path at the end position only if not already present
     mode="${2:-ALWAYS_PREPEND}" 
-    vscode_settings_set_path "$VSCODE_CONFIG_FILE" "$path_expression_to_add" "$mode"
+    vscode_settings_set_path "$IATOOLS_VSCODE_CONFIG_FILE" "$path_expression_to_add" "$mode"
 }
 
 vscode_settings_remove_path() {
@@ -85,7 +93,7 @@ vscode_settings_remove_path() {
     # REMOVE remove all occurences of a fix expression
     # REMOVE_REGEXP remove all occurences of an regexp expression
     mode="${2:-REMOVE}"
-    vscode_settings_set_path "$VSCODE_CONFIG_FILE" "$path_expression_to_remove" "$mode"
+    vscode_settings_set_path "$IATOOLS_VSCODE_CONFIG_FILE" "$path_expression_to_remove" "$mode"
 }
 
 

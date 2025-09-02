@@ -3,7 +3,7 @@
   "mcp": {
     "context7": {
       "type": "local",
-      "command": ["${NODEJS_BIN_PATH}npx", "-y", "@upstash/context7-mcp"],
+      "command": ["${IATOOLS_NODEJS_BIN_PATH}npx", "-y", "@upstash/context7-mcp"],
       "enabled": true
     }
   }
