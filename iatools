@@ -76,7 +76,7 @@ runtime_path() {
     
     # used by MCP local server
     if check_requirements "python" "VERBOSE"; then
-        export IATOOLS_PYTHON_BIN_PATH="${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/mambaforge/bin/"
+        export IATOOLS_PYTHON_BIN_PATH="${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/miniforge3/bin/"
     else
         # we use an already installed nodejs, not iatools nodejs
         export IATOOLS_PYTHON_BIN_PATH=""
@@ -91,7 +91,7 @@ check_requirements() {
     [ "$mode" = "" ] && mode="SILENT"
     case "$feature" in
         "jq")
-            if command -v jq &>/dev/null; then
+            if command -v jq >/dev/null 2>&1; then
                 [ "$mode" = "VERBOSE" ] && echo "-- jq detected in $(command -v jq)"
                 return 0
             else
@@ -103,7 +103,7 @@ check_requirements() {
                 [ "$mode" = "VERBOSE" ] && echo "-- nodejs detected in ${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/nodejs/bin/node"
                 return 0
             else
-                if command -v node &>/dev/null; then
+                if command -v node >/dev/null 2>&1; then
                     [ "$mode" = "VERBOSE" ] && echo "-- nodejs detected in $(command -v node)"
                     return 0
                 fi
@@ -112,11 +112,11 @@ check_requirements() {
             ;;
         
         "python")
-            if [ -f "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/mambaforge/bin/python" ]; then
+            if [ -f "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/miniforge3/bin/python" ]; then
                 [ "$mode" = "VERBOSE" ] && echo "-- python detected in ${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/mambaforge/bin/python"
                 return 0
             else
-                if command -v python &>/dev/null; then
+                if command -v python >/dev/null 2>&1; then
                     [ "$mode" = "VERBOSE" ] && echo "-- python detected in $(command -v python)"
                     return 0
                 fi
@@ -173,6 +173,11 @@ main() {
                         fi
                 esac
             done
+
+            # install json5 nodejs package (to correct invalid json)
+            # https://github.com/json5/json5
+            PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm install -g json5
+            
             ;;
         oc)
             if ! check_requirements "jq"; then echo " -- ERROR : jq missing, launch iatools init"; exit 1; fi;

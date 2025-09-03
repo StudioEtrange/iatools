@@ -5,9 +5,11 @@ merge_json_file() {
     target_file="$2"
 
     if [ ! -f "$file_to_merge" ]; then
-        echo "Error: file to merge not found $file_to_merge"
+        echo "ERROR : file to merge not found $file_to_merge"
         exit 1
     fi
+
+    test_and_fix_json_file "$file_to_merge"
 
     if [ ! -s "$target_file" ]; then
         echo "Valid target file not found at $target_file. Creating it."
@@ -15,9 +17,9 @@ merge_json_file() {
         echo "{}" > "$target_file"
     fi
 
-    tmp_file=$(mktemp)
-    tmp_merge=$(mktemp)
+    test_and_fix_json_file "$target_file"
 
+    local tmp_merge="$(mktemp)"
     # Replace ${VAR} with environnement variable if it exists or keep ${VAR} as is 
     # if VAR exists but empty, ${VAR} is replaced with an empty string
     if ! jq \
@@ -31,21 +33,22 @@ merge_json_file() {
                     );
             expand_env
     ' "$file_to_merge" > "$tmp_merge"; then
-        echo "Error: expanding environment variables in $file_to_merge" >&2
-        rm -f "$tmp_file" "$tmp_merge"
+        echo "ERROR : expanding environment variables in $file_to_merge" >&2
         exit 1
     fi
 
+    test_and_fix_json_file "$tmp_merge"
 
+    local tmp_file="$(mktemp)"
     # Merge the two json files
-    jq -s '.[0] * .[1]' "$target_file" "$tmp_merge" > "$tmp_file"
+    jq -s '.[0] * .[1]' "${target_file}" "$tmp_merge" > "$tmp_file"
     
     if [ $? -ne 0 ]; then
-        echo "Error processing with jq"
-        rm -f "$tmp_file"
+        rm -f "$tmp_file" "$tmp_merge"
         exit 1
     else
         mv "$tmp_file" "$target_file"
+        rm -f "$tmp_file" "$tmp_merge"
     fi
 }
 
@@ -55,7 +58,7 @@ json_remove_key() {
     target_file="$2"
 
     if [ -z "$key_path" ]; then
-        echo "Error: json key path to remove empty"
+        echo "ERROR : json key path to remove empty"
         exit 1
     fi
 
@@ -69,15 +72,74 @@ json_remove_key() {
         return
     fi
 
-    tmp_file=$(mktemp)
+    local tmp_file="$(mktemp)"
 
     jq "del(.${key_path})" "$target_file" > "$tmp_file"
 
     if [ $? -ne 0 ]; then
-        echo "Error processing with jq"
+        echo "ERROR : processing with jq"
         rm -f "$tmp_file"
         exit 1
     else
         mv "$tmp_file" "$target_file"
+        rm -f "$tmp_file"
     fi
+}
+
+# format and fix invalid json (i.e: remove last comma at the end of a json object)
+# can be used in a stream :
+#       echo '{ "to" :"",}' | sanitize_json
+#       sanitize_json - < file.json 
+# or if a file is passed as argument 1, the file will be sanitize itself
+#       sanitize_json "file.json"
+#
+# json5 options
+#   -s : size of indentation
+#   -c : convert inplace without making output file https://github.com/json5/json5/blob/main/lib/cli.js#L87
+sanitize_json() {
+    file="$1"
+
+    if [ -n "$file" ] && [ "$file" != "-" ]; then
+        if [ ! -f "$file" ]; then
+            echo "ERROR : file not found: $file"
+            return 1
+        fi
+
+        local tmp_file="$(mktemp)"
+
+        PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" json5 -s 2 "$file" 2>/dev/null >"$tmp_file" 
+        if [ $? -ne 0 ]; then
+            echo "ERROR : failed to sanitize json from $file"
+            rm -f "$tmp_file"
+            return 1
+        else
+            mv "$tmp_file" "$file"
+            return 0
+        fi
+    fi
+
+    # parse sream
+    PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" json5 -s 2
+}
+
+test_and_fix_json_file() {
+    file_to_test="$1"
+
+    if [ ! -f "$file_to_test" ]; then
+        echo "ERROR : file not found $file_to_test"
+        exit 1
+    fi
+
+    if ! jq -e . "$file_to_test" >/dev/null 2>&1; then
+        echo "WARN : invalid json file : $file_to_test"
+        echo "       try to sanitize it"
+        sanitize_json "$file_to_test"
+        if ! jq -e . "$file_to_test" >/dev/null 2>&1; then
+            echo "ERROR : invalid json file : $file_to_test"
+            exit 1
+        else
+        echo "       it should be a valid json file now"
+        fi
+    fi
+
 }
