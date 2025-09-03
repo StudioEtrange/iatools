@@ -12,7 +12,10 @@ vscode_path() {
         #   Windows %APPDATA%\Code\User\settings.json
         #   macOS $HOME/Library/Application\ Support/Code/User/settings.json
         #   Linux $HOME/.config/Code/User/settings.json
-        export IATOOLS_VSCODE_CONFIG_FILE="$HOME/.config/Code/User/settings.json"
+        case "$STELLA_CURRENT_PLATFORM" in
+            "linux") export IATOOLS_VSCODE_CONFIG_FILE="$HOME/.config/Code/User/settings.json";;
+            "darwin") export IATOOLS_VSCODE_CONFIG_FILE="$HOME/Library/Application Support/Code/User/settings.json";;
+        esac
     fi
 }
 
@@ -28,10 +31,14 @@ vscode_settings_configure() {
         ;;
     esac
 
+
     # A/ add ${env:PATH} --------------
     vscode_settings_add_path '${env:PATH}' "POSTPEND_IF_NOT_EXISTS"
     
-    # B/ code remote-cli PATH --------------
+
+    
+    # B/ binary 'code' local and remote-cli PATH --------------
+    # NOTE : we need at least code binary to launch vscode extension installation
     #   when "terminal.integrated.env.linux".PATH on remote is empty, vscode remote-cli code path is auto added to PATH variable in terminal
     #   when "terminal.integrated.env.linux".PATH on remote is defined, vscode remote-cli code path is NOT auto added to PATH variable in terminal
     #       (the value of "terminal.integrated.inheritEnv" do not change this behavior)
@@ -48,7 +55,20 @@ vscode_settings_configure() {
 
         vscode_settings_remove_path "^$HOME/.vscode-server/cli/servers/Stable-.*" "REMOVE_REGEXP"
         [ -d "$vscode_remote_cli_path" ] && vscode_settings_add_path "$vscode_remote_cli_path" "ALWAYS_PREPEND"
+    else
+
+        # local binary "code"
+        case "$STELLA_CURRENT_PLATFORM" in
+            "linux") echo "ERROR : TODO support local linux vscode";;
+            "darwin") 
+                vscode_cli_path="/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+                [ -d "$vscode_cli_path" ] && vscode_settings_add_path "$vscode_cli_path" "ALWAYS_PREPEND"
+                ;;
+        esac
     fi
+
+
+
 
     # C/ specific cli path --------------
     case "$target" in
@@ -204,7 +224,7 @@ vscode_settings_set_path() {
 
     ' "$vscode_settings_file" > "$tmp_file"
     if [ $? -ne 0 ]; then
-        echo "Error processing with jq"
+        echo "ERROR : processing with jq"
         rm -f "$tmp_file"
         exit 1
     else

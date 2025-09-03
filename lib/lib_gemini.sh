@@ -52,7 +52,7 @@ gemini_add_command() {
     command_file="$1"
 
      if [ ! -f "${command_file}" ]; then
-        echo "Error: command file not found ${command_file}"
+        echo "ERROR : command file not found ${command_file}"
         exit 1
     fi
 
