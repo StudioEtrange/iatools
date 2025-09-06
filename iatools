@@ -32,7 +32,6 @@ Options:
     gc mcp calculator install|uninstall         Add mcp-calculator local server configuration.
     gc mcp github install|uninstall             Add mcp-github remote server configuration.
     gc mcp desktop-commander install|uninstall  Add mcp-desktop-commander local server configuration.
-    gc cmd-plan install|uninstall               Add /plan command
     ----
     oc : opencode - https://opencode.ai
     oc install                          Install and configure Opencode.

@@ -37,18 +37,18 @@ The `iatools <commands>` script provides the following commands:
 | **gc configure** | Configure Gemini CLI *(included in `gc install`)* |
 | **gc reset** | Reset all Gemini CLI configuration |
 | **gc launch [context folder] -- <options>** | Launch Gemini CLI |
-| **gc mcp-context7 install \| uninstall** | Add/remove mcp-context7 local server configuration |
-| **gc mcp-calculator install \| uninstall** | Add/remove mcp-calculator local server configuration |
-| **gc mcp-desktop-commander install \| uninstall** | Add/remove mcp-desktop-commander local server configuration |
-| **gc mcp-github install \| uninstall** | Add/remove mcp-github remote server configuration |
+| **gc mcp context7 install \| uninstall** | Add/remove mcp-context7 local server configuration |
+| **gc mcp calculator install \| uninstall** | Add/remove mcp-calculator local server configuration |
+| **gc mcp desktop-commander install \| uninstall** | Add/remove mcp-desktop-commander local server configuration |
+| **gc mcp github install \| uninstall** | Add/remove mcp-github remote server configuration |
 | **oc install** | Install and configure Opencode |
 | **oc uninstall** | Uninstall Opencode *(keeps config; use `iatools oc reset` to remove it)* |
 | **oc configure** | Configure Opencode *(included in `oc install`)* |
 | **oc reset** | Reset all Opencode configuration |
 | **oc launch [context folder] -- <options>** | Launch Opencode |
-| **oc mcp-context7 install \| uninstall** | Add/remove mcp-context7 local server configuration |
-| **oc mcp-calculator install \| uninstall** | Add/remove mcp-calculator local server configuration |
-| **oc mcp-github install \| uninstall** | Add/remove mcp-github remote server configuration |
+| **oc mcp context7 install \| uninstall** | Add/remove mcp-context7 local server configuration |
+| **oc mcp calculator install \| uninstall** | Add/remove mcp-calculator local server configuration |
+| **oc mcp github install \| uninstall** | Add/remove mcp-github remote server configuration |
 
 ## gemini-cli
 
@@ -65,6 +65,9 @@ The `iatools <commands>` script provides the following commands:
 * saved chat history is in $HOME/.gemini/tmp
 
 * Gemini CLI supports MCP Prompts as slash commands
+
+* gemini 2.5 pro is only free of charge when using google auth. If you set a gemini key, by using GEMINI_API_KEY, it will not be free (even if you previously with google auth)
+
 
 ## opencode cli
 
