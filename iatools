@@ -159,9 +159,22 @@ main() {
             for f in $STELLA_APP_FEATURE_LIST; do
                 case "$f" in
                     jq*);;
-                    *) 
+                    nodejs)
+                        if [ "$STELLA_CURRENT_PLATFORM" = "linux" ]; then
+		                    if [ "$STELLA_CURRENT_CPU_FAMILY" = "intel" ]; then
+                                _ldd_version="$(ldd --version 2>&1 >/dev/null | awk '/ldd/{print $NF}')"
+                                if [ "$_lddversion" = "2.17" ]; then
+                                    f="nodejs:23_7_0_glibc_217"
+                                    echo "-- detected glibc 2.17 switch to nodejs special build for it"
+                                fi
+                            fi
+                        fi
+                        # this notation do not stop case statement workflow
+                        ;&
+                    *)
                         _feature=""
                         _feature_name=""
+
                         $STELLA_API select_official_schema "$f" "_feature" "_feature_name"
                         if [ ! "$_feature" = "" ]; then
                             echo "-- install $_feature"
@@ -170,6 +183,7 @@ main() {
                         else
                             echo "!! WARN : $f is not a valid feature for stella framework"
                         fi
+                        ;;
                 esac
             done
 
