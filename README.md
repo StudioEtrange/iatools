@@ -136,3 +136,5 @@ The `iatools <commands>` script provides the following commands:
 * llxprt : gemini-cli fork : https://github.com/acoliver/llxprt-code
 * kilocode and roocode can use gemini-cli as LLM provider
 * kilocode vsextension config home : $HOME/.vscode-server/data/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json
+* LiteLLM and gemini-cli https://docs.litellm.ai/docs/tutorials/litellm_gemini_cli
+* process manager goreman https://github.com/mattn/goreman

@@ -59,7 +59,7 @@ vscode_settings_configure() {
 
         # local binary "code"
         case "$STELLA_CURRENT_PLATFORM" in
-            "linux") echo "ERROR : TODO support local linux vscode";;
+            "linux") echo "WARN : TODO support local linux vscode";; # code might not be found
             "darwin") 
                 vscode_cli_path="/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
                 [ -d "$vscode_cli_path" ] && vscode_settings_add_path "$vscode_cli_path" "ALWAYS_PREPEND"

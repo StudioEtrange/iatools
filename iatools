@@ -64,7 +64,7 @@ runtime_path() {
     # add launchers to current path
     export PATH="${IATOOLS_GEMINI_LAUNCHER_HOME}:${IATOOLS_OPENCODE_LAUNCHER_HOME}:${PATH}"
 
-    # NOTE : we do not permanently add runtime (nodejs, python, ...) path to current system path to not override eventually existing runtime
+    # NOTE : we do not permanently add runtime paths (nodejs, python, ...)  to current system path to not override eventually existing runtime
     # used by gemini, opencode and several MCP local server
     if check_requirements "nodejs" "VERBOSE"; then
         export IATOOLS_NODEJS_BIN_PATH="${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/nodejs/bin/"
