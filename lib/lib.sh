@@ -1,5 +1,74 @@
 
 
+
+
+
+# check availability
+check_requirements() {
+    feature="$1"
+    mode="$2"
+    [ "$mode" = "" ] && mode="SILENT"
+    case "$feature" in
+        "jq")
+            if command -v jq >/dev/null 2>&1; then
+                [ "$mode" = "VERBOSE" ] && echo "-- jq detected in $(command -v jq)"
+                return 0
+            else
+                return 1
+            fi
+            ;;
+        "nodejs") 
+            if [ -f "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/nodejs/bin/node" ]; then
+                [ "$mode" = "VERBOSE" ] && echo "-- nodejs detected in ${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/nodejs/bin/node"
+                return 0
+            else
+                if command -v node >/dev/null 2>&1; then
+                    [ "$mode" = "VERBOSE" ] && echo "-- nodejs detected in $(command -v node)"
+                    return 0
+                fi
+            fi
+            return 1
+            ;;
+        
+        "python")
+            if [ -f "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/miniforge3/bin/python" ]; then
+                [ "$mode" = "VERBOSE" ] && echo "-- python detected in ${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/mambaforge/bin/python"
+                return 0
+            else
+                if command -v python >/dev/null 2>&1; then
+                    [ "$mode" = "VERBOSE" ] && echo "-- python detected in $(command -v python)"
+                    return 0
+                fi
+            fi
+            return 1
+            ;;
+        *)
+            ;;
+    esac
+}
+
+require() {
+    feature="$1"
+
+    case "$feature" in
+        "json5")
+            if ! PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" type json5 >/dev/null 2>&1; then
+                # install json5 nodejs package (to correct invalid json)
+                # https://github.com/json5/json5
+                PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm install -g json5
+            fi
+            ;;
+
+    esac
+}
+
+iatools_remove_dependencies() {
+    # remove isolated dependencies and runtime
+    rm -Rf "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}"
+    # remove dependencies
+    rm -Rf "${STELLA_APP_FEATURE_ROOT}"
+}
+
 merge_json_file() {
     file_to_merge="$1"
     target_file="$2"
@@ -99,6 +168,8 @@ json_remove_key() {
 sanitize_json() {
     file="$1"
 
+    require "json5"
+    
     if [ -n "$file" ] && [ "$file" != "-" ]; then
         if [ ! -f "$file" ]; then
             echo "ERROR : file not found: $file"
