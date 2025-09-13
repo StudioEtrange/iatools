@@ -22,7 +22,7 @@ Options:
     shell                   Enter iatools context and path.
     ----
     gc : gemini-cli - https://google-gemini.github.io/gemini-cli
-    gc install                      Install and configure Gemini CLI. (when asked to relaunch gemini cli, use 'iatools gc launch' command)
+    gc install [@version]           Install and configure Gemini CLI. (main versions are latest, nightly, preview) (when asked to relaunch gemini cli, use 'iatools gc launch' command)
     gc uninstall                    Uninstall Gemini CLI (keeping all configuration unchanged. to remove configuration use 'iatools gc reset' command)
     gc configure                    Configure Gemini CLI. ('iatools gc install' include configuration)
     gc reset                        Reset all Gemini CLI configuration.
@@ -157,7 +157,7 @@ main() {
                     if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
 
                     echo "Installing Opencode CLI"
-                    PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm install -g opencode-ai@latest
+                    PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm install --verbose -g opencode-ai@latest
                 
                     echo "Configuring Opencode CLI"
                     opencode_settings_configure
@@ -248,9 +248,15 @@ main() {
                 install)
                     if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
 
-                    echo "Installing Gemini CLI"
-                    PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm install -g @google/gemini-cli
+                    local version="$1"
+                    [ -z "${version}" ] && version="@latest"
 
+                    echo "Installing Gemini CLI ${version}"
+                    # available versions : https://www.npmjs.com/package/@google/gemini-cli-core
+                    # latest is stable version
+                    # 2025/09/13 : cannot install behind a http proxy : https://github.com/google-gemini/gemini-cli/issues/7795
+                    PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm install --verbose -g @google/gemini-cli${version}
+                    
                     echo "Configuring Gemini CLI"
                     gemini_settings_configure
                     vscode_settings_configure "gemini"
@@ -340,12 +346,12 @@ main() {
             shift
             case "$sub_command" in
                 set)
-                    local key=$1
+                    local key="$1"
                     shift
-                    local value=$1
+                    local value="$1"
                     shift
                     if [ -z "$key" ]; then
-                        echo "Error: Missing key for npm-config set"
+                        echo " -- ERROR : Missing key for npm-config set"
                         usage
                         exit 1
                     fi
