@@ -138,3 +138,4 @@ The `iatools <commands>` script provides the following commands:
 * kilocode vsextension config home : $HOME/.vscode-server/data/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json
 * LiteLLM and gemini-cli https://docs.litellm.ai/docs/tutorials/litellm_gemini_cli
 * process manager goreman https://github.com/mattn/goreman
+* npm / npx option --registry

@@ -60,6 +60,13 @@ iatools_path() {
     vscode_path
 }
 
+iatools_remove_dependencies() {
+    # remove isolated dependencies and runtime
+    rm -Rf "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}"
+    # remove dependencies
+    rm -Rf "${STELLA_APP_FEATURE_ROOT}"
+}
+
 runtime_path() {
     # add launchers to current path
     export PATH="${IATOOLS_GEMINI_LAUNCHER_HOME}:${IATOOLS_OPENCODE_LAUNCHER_HOME}:${PATH}"
@@ -152,6 +159,9 @@ main() {
             $STELLA_API boot_app_shell "local"
             ;;
         init)
+            # remove dependencies first, to always install from scratch
+            iatools_remove_dependencies
+
             echo "- Install internal dependencies for iatools (which will be added to iatools PATH while running)"
             $STELLA_API get_feature "jq"
 
@@ -162,9 +172,9 @@ main() {
                     nodejs)
                         if [ "$STELLA_CURRENT_PLATFORM" = "linux" ]; then
 		                    if [ "$STELLA_CURRENT_CPU_FAMILY" = "intel" ]; then
-                                _ldd_version="$(ldd --version 2>&1 >/dev/null | awk '/ldd/{print $NF}')"
-                                if [ "$_lddversion" = "2.17" ]; then
-                                    f="nodejs:23_7_0_glibc_217"
+                                _ldd_version="$(ldd --version 2>/dev/null | awk '/ldd/{print $NF}')"
+                                if [ "${_ldd_version}" = "2.17" ]; then
+                                    f="nodejs#23_7_0_glibc_217"
                                     echo "-- detected glibc 2.17 switch to nodejs special build for it"
                                 fi
                             fi
