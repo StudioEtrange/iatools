@@ -1,134 +1,121 @@
 # IATools
 
-This project provides a set of scripts to interact with ia tools and models.
+IATools is a command-line application designed to streamline the installation and management of AI development tools, including `gemini-cli`, `opencode`, and various MCP servers.
 
-* Maain features
-  * gemini-cli management, installation, configuration ... - https://google-gemini.github.io/gemini-cli
-  * opencode cli management, installation, configuration ... - https://opencode.ai
+## Key Features of IATools
 
-- [IATools](#iatools)
-  - [Requirements](#requirements)
-  - [Commands](#commands)
-  - [gemini-cli](#gemini-cli)
-  - [opencode cli](#opencode-cli)
-  - [MCP servers](#mcp-servers)
-    - [MCP desktop commander](#mcp-desktop-commander)
-    - [MCP Server Calculator](#mcp-server-calculator)
-    - [Context7 MCP Server](#context7-mcp-server)
-    - [GitHub's official MCP Server](#githubs-official-mcp-server)
-  - [TODO](#todo)
+*   **AI Tool Management**: Streamlines the installation and configuration of AI agents like `gemini-cli` and `opencode`.
+*   **MCP Server Integration**: Easily configure and manage connections to various MCP (Model Context Protocol) servers.
+*   **Isolated Environments**: All tools are installed into a local `workspace/` directory, preventing system-wide conflicts.
+*   **Portability**: Bash application, works on Linux & MacOS.
+
+## Getting Started
+
+### Requirements
+
+*   `bash`
+*   `git`
+
+### Commands
+
+`iatools` provides a simple command-line interface to manage your tools and environments.
+
+| Command                             | Description                                                                 |
+| ----------------------------------- | --------------------------------------------------------------------------- |
+| **init**                            | Install/Reinstall dependencies.                                             |
+| **help**                            | Display this help message.                                                  |
+| |
+| **gc install [@version]**           | Install and configure Gemini CLI (e.g., `@latest`, `@nightly`).             |
+| **gc uninstall**                    | Uninstall Gemini CLI (keeps config).                                        |
+| **gc configure**                    | Configure Gemini CLI.                                                       |
+| **gc reset**                        | Reset all Gemini CLI configuration.                                         |
+| **gc launch [ctx] -- <opts>**       | Launch Gemini CLI, optionally in a specific context folder.                 |
+| **gc cmd-plan install\|uninstall**   | Add or remove the 'plan' command to Gemini CLI.                             |
+| **gc mcp [name] install\|uninstall** | Add or remove an MCP server configuration for Gemini CLI.                   |
+| |
+| **oc install**                      | Install and configure Opencode CLI.                                         |
+| **oc uninstall**                    | Uninstall Opencode CLI (keeps config).                                      |
+| **oc configure**                    | Configure Opencode CLI.                                                     |
+| **oc reset**                        | Reset all Opencode CLI configuration.                                       |
+| **oc launch [ctx] -- <opts>**       | Launch Opencode CLI, optionally in a specific context folder.               |
+| **oc mcp [name] install\|uninstall** | Add or remove an MCP server configuration for Opencode CLI.                 |
+| |
+| **npm-config set <key> <value>**    | Set a configuration for the internal npm.                                   |
+
+### How-To
 
 
-## Requirements
+**Install and configure gemini-cli from scratch**
 
-* bash, git
+```
+git clone https://github.com/StudioEtrange/iatools
+cd iatools
+./iatools init
+./iatools gc install
+```
 
-## Commands
+**Register local MCP server calculator**
+```
+cd iatools
+./iatools mcp calculator install
+```
 
-`iatools` provides the following commands:
+**Configure the underlying nodejs to add a local npm registry**
+```
+cd iatools
+./iatools npm-config set registry https://registry.local.org/
+```
 
-| Commande | Description |
-|----------|-------------|
-| **init** | Install dependencies |
-| **help** | Display this help message |
-| **shell** | Enter iatools context and path |
-| **gc install** | Install and configure Gemini CLI *(if asked to relaunch, use `iatools gc launch`)* |
-| **gc uninstall** | Uninstall Gemini CLI *(keeps config; use `iatools gc reset` to remove it)* |
-| **gc configure** | Configure Gemini CLI *(included in `gc install`)* |
-| **gc reset** | Reset all Gemini CLI configuration |
-| **gc launch [context folder] -- <options>** | Launch Gemini CLI |
-| **gc mcp context7 install \| uninstall** | Add/remove mcp-context7 local server configuration |
-| **gc mcp calculator install \| uninstall** | Add/remove mcp-calculator local server configuration |
-| **gc mcp desktop-commander install \| uninstall** | Add/remove mcp-desktop-commander local server configuration |
-| **gc mcp github install \| uninstall** | Add/remove mcp-github remote server configuration |
-| **oc install** | Install and configure Opencode |
-| **oc uninstall** | Uninstall Opencode *(keeps config; use `iatools oc reset` to remove it)* |
-| **oc configure** | Configure Opencode *(included in `oc install`)* |
-| **oc reset** | Reset all Opencode configuration |
-| **oc launch [context folder] -- <options>** | Launch Opencode |
-| **oc mcp context7 install \| uninstall** | Add/remove mcp-context7 local server configuration |
-| **oc mcp calculator install \| uninstall** | Add/remove mcp-calculator local server configuration |
-| **oc mcp github install \| uninstall** | Add/remove mcp-github remote server configuration |
+## Directory Structure
 
-## gemini-cli
+*   `iatools/`: Contains the main application logic for the `iatools` wrapper script.
+*   `lib/`: ITools internal libraries and code.
+*   `pool/`: Contains configuration files templates and framework.
+*   `workspace/`: The directory where all isolated environments and installed software ("features") are stored.
 
-```An open-source AI agent that brings the power of Gemini directly into your terminal.```
+## Integrations
 
-* website : https://google-gemini.github.io/gemini-cli
-* source code : https://github.com/google-gemini/gemini-cli
+### Gemini CLI
 
-* IDE integration : 
+An open-source AI agent that brings the power of Gemini directly into your terminal.
+* **Website**: [google-gemini.github.io/gemini-cli](https://google-gemini.github.io/gemini-cli)
+* **Source**: [github.com/google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli)
+* **IDE Integration**: 
   * When you run Gemini CLI inside a supported editor, it will automatically detect your environment and prompt you to connect.
   * Manual installation : use `/ide install` - if you install vscode extension with /ide install and have problem, just close and relaunch vscode
   * Other Manual Installation : https://marketplace.visualstudio.com/items?itemName=Google.gemini-cli-vscode-ide-companion
 
-* saved chat history is in $HOME/.gemini/tmp
 
+*NOTES*
 * Gemini CLI supports MCP Prompts as slash commands
+* `/chat save` - saved chat history are in $HOME/.gemini/tmp
+* gemini 2.5 pro is only free of charge when using google auth inside gemini-cli. If you set a gemini key, by using GEMINI_API_KEY, it will not be free (even if you previously with google auth)
 
-* gemini 2.5 pro is only free of charge when using google auth. If you set a gemini key, by using GEMINI_API_KEY, it will not be free (even if you previously with google auth)
+### Opencode CLI
+****
+An AI coding agent built for the terminal.
+* **Website**: [opencode.ai](https://opencode.ai)
+* **Source**: [github.com/sst/opencode](https://github.com/sst/opencode)
+* **IDE Integration**: Integrates with VS Code, Cursor, and other IDEs by running `opencode` in the integrated terminal.
 
+*NOTES*
+  * First step : init IA provider : `opencode auth login`
 
-## opencode cli
+### MCP Servers
 
-```AI coding agent, built for the terminal.```
+IATools simplifies connecting to MCP (Model Context Protocol) servers, allowing your AI agents to interact with external tools and services.
+* **Catalogs**: [MCPMarket](https://mcpmarket.com/), [PulseMCP](https://www.pulsemcp.com/servers), [MCPServers.org](https://mcpservers.org/)
 
-* website : https://opencode.ai
-* source code : https://github.com/sst/opencode
-
-* opencode integrates with VS Code, Cursor, or any IDE that supports a terminal.
-  * Open VS Code, Open the integrated terminal, Run opencode : the extension installs automatically
-  * Manual installation : https://marketplace.visualstudio.com/items?itemName=sst-dev.opencode
-
-* First steps, init IA provider : `opencode auth login`
-
-
-## MCP servers
-
-* MCP servers Catalogs : 
-  * https://mcpmarket.com/ : Directory of awesome MCP servers and clients to connect AI agents with your favorite tools.
-  * https://www.pulsemcp.com/servers?sort=popular-total-desc : MCP Server Directory
-  * https://mcpservers.org/ : Awesome MCP Servers - A collection of servers for the Model Context Protocol.
-
-### MCP desktop commander
-
-```This is MCP server for Claude that gives it terminal control, file system search and diff file editing capabilities```
-
-* source code : https://github.com/wonderwhy-er/desktopcommandermcp
-* in catalogs :
-  * https://www.pulsemcp.com/servers/wonderwhy-er-desktop-commander
-  * https://mcpmarket.com/server/desktop-commander-1
-
-### MCP Server Calculator
-
-```A Model Context Protocol server for calculating```
-
-* source code : https://github.com/githejie/mcp-server-calculator
-* in catalogs :
-  * https://mcpservers.org/servers/githejie/mcp-server-calculator
+**Supported MCP Servers:**
+* **Desktop Commander**: Grants terminal control and file system access. ([Source](https://github.com/wonderwhy-er/desktopcommandermcp))
+* **Calculator**: A simple server for performing calculations. ([Source](https://github.com/githejie/mcp-server-calculator))
+* **Context7**: Fetches up-to-date documentation and code examples. ([Source](https://github.com/upstash/context7)). https://context7.com/
+* **GitHub**: Official server for interacting with GitHub issues, PRs, and repositories. ([Source](https://github.com/github/github-mcp-server))
 
 
-### Context7 MCP Server
+## Notes on underlying Framework: Stella
 
-```Fetches up-to-date documentation and code examples for LLMs and AI code editors directly from the source.``` 
-
-* website : https://context7.com/
-* source code : https://github.com/upstash/context7
-* in catalogs :
-  * https://mcpmarket.com/server/context7-1
-
-
-### GitHub's official MCP Server
-
-```Integration with GitHub Issues, Pull Requests, and more.```
-
-* source code : https://github.com/github/github-mcp-server
-* in catalogs :
-  * https://www.pulsemcp.com/servers/github
-
-* The GitHub MCP Server connects AI tools directly to GitHub's platform. This gives AI agents, assistants, and chatbots the ability to read repositories and code files, manage issues and PRs, analyze code, and automate workflows. All through natural language interactions.
-
-* The remote GitHub MCP Server is hosted by GitHub and provides the easiest method for getting up and running. If your MCP host does not support remote MCP servers, don't worry! You can use the local version of the GitHub MCP Server instead.
+IATools leverages the **Stella** framework for its core functionality. Stella provides the infrastructure for application structure, environment isolation, and package management. **Package Management**: Stella uses a concept of "Features" (software packages) which are defined by "Recipes" (Bash scripts). `iatools` uses this system to provide all the tools it manages. The recipes are located in `pool/stella/nix/pool/feature-recipe/`.
 
 
 ## TODO
@@ -138,4 +125,3 @@ This project provides a set of scripts to interact with ia tools and models.
 * kilocode vsextension config home : $HOME/.vscode-server/data/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json
 * LiteLLM and gemini-cli https://docs.litellm.ai/docs/tutorials/litellm_gemini_cli
 * process manager goreman https://github.com/mattn/goreman
-* npm / npx option --registry
