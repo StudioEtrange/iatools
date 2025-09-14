@@ -5,7 +5,7 @@ vscode_path() {
 
     # vscode pecific paths
     if [ -d "$HOME/.vscode-server/data/Machine" ]; then
-        # "VSCode Remote - SSH or WSL config file"
+        # "VSCode Remote - Remote SSH or WSL config file"
         export IATOOLS_VSCODE_CONFIG_FILE="$HOME/.vscode-server/data/Machine/settings.json"
     else
         # https://code.visualstudio.com/docs/configure/settings
@@ -33,6 +33,7 @@ vscode_settings_configure() {
 
 
     # A/ add ${env:PATH} --------------
+    echo "- configure VSCode : add current $PATH to terminal.integrated.env.linux"
     vscode_settings_add_path '${env:PATH}' "POSTPEND_IF_NOT_EXISTS"
     
 
@@ -44,40 +45,76 @@ vscode_settings_configure() {
     #       (the value of "terminal.integrated.inheritEnv" do not change this behavior)
     #   so we add it manually because this script always set "terminal.integrated.env.linux".PATH which will never be empty anymore
     
+    # on linux server :
     # remote-cli code is in $HOME/.vscode-server/cli/servers/Stable-<commit>/server/bin/remote-cli/code
     # to select the latest vscode version, pick one of these :
-    #       - use $HOME/.vscode-server/cli/servers/lru.json wich stores the last used vscode version
-    #       - filter ls result ordered by date $HOME/.vscode-server/cli/servers/Stable-*
+    #       - use $HOME/.vscode-server/cli/servers/lru.json which stores the last used vscode version
+    #       - [MY CHOICE :] filter ls result ordered by date $HOME/.vscode-server/cli/servers/Stable-*
     #       - filter value of VSCODE_GIT_ASKPASS_NODE env variable setted by the core Git extension 
-    if [ -d "$HOME/.vscode-server/cli/servers" ] && [ "$(ls -A "$HOME/.vscode-server/cli/servers/Stable-"* 2>/dev/null)" ]; then
-        vscode_remote_home="$(ls -1dt "$HOME/.vscode-server/cli/servers/Stable-"* | head -n 1 | xargs -I {} echo {}/server)"
-        vscode_remote_cli_path="$vscode_remote_home/bin/remote-cli"
+    # on WSL linux :
+    # remote cli code is in $HOME/.vscode-server/bin/<commit>/bin/remote-cli/code
+    local code_found=0
 
-        vscode_settings_remove_path "^$HOME/.vscode-server/cli/servers/Stable-.*" "REMOVE_REGEXP"
-        [ -d "$vscode_remote_cli_path" ] && vscode_settings_add_path "$vscode_remote_cli_path" "ALWAYS_PREPEND"
+    echo "- configure VSCode : add current code binary to PATH for terminal.integrated.env.linux"
+    if [ -d "$HOME/.vscode-server" ]; then
+        # remote linux server
+        if [ -d "$HOME/.vscode-server/cli/servers" ] && [ "$(ls -A "$HOME/.vscode-server/cli/servers/Stable-"* 2>/dev/null)" ]; then
+            vscode_remote_home="$(ls -1dt "$HOME/.vscode-server/cli/servers/Stable-"* | head -n 1 | xargs -I {} echo {}/server)"
+            vscode_remote_cli_path="$vscode_remote_home/bin/remote-cli"
+
+            if [ -f "${vscode_remote_cli_path}/code" ]; then
+                code_found=1
+                vscode_settings_remove_path "^$HOME/.vscode-server/cli/servers/Stable-.*" "REMOVE_REGEXP"
+                vscode_settings_add_path "$vscode_remote_cli_path" "ALWAYS_PREPEND"
+                echo "- configure VSCode : code found in $vscode_remote_cli_path"
+            fi
+        fi
+
+        # WSL only
+        if grep -qi microsoft /proc/version 2>/dev/null; then
+            echo "- configure VSCode : WSL detected"
+            if [ -d "$HOME/.vscode-server/bin" ] && [ "$(ls -A "$HOME/.vscode-server/bin/"* 2>/dev/null)" ]; then
+                vscode_remote_home="$(ls -1dt "$HOME/.vscode-server/bin/"* | head -n 1 | xargs -I {} echo {})"
+                vscode_remote_cli_path="$vscode_remote_home/bin/remote-cli"
+
+                if [ -f "${vscode_remote_cli_path}/code" ]; then
+                    code_found=1
+                    vscode_settings_remove_path "^$HOME/.vscode-server/bin/.*" "REMOVE_REGEXP"
+                    vscode_settings_add_path "$vscode_remote_cli_path" "ALWAYS_PREPEND"
+                    echo "- configure VSCode : code found in $vscode_remote_cli_path"
+                fi
+            fi
+        fi
+
     else
-
         # local binary "code"
         case "$STELLA_CURRENT_PLATFORM" in
-            "linux") echo "WARN : TODO support local linux vscode";; # code might not be found
+            "linux");; # TODO code binary might not be found
             "darwin") 
                 vscode_cli_path="/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
-                [ -d "$vscode_cli_path" ] && vscode_settings_add_path "$vscode_cli_path" "ALWAYS_PREPEND"
+                if [ -f "${vscode_remote_cli_path}/code" ]; then
+                    code_found=1
+                    vscode_settings_add_path "$vscode_cli_path" "ALWAYS_PREPEND"
+                fi
                 ;;
         esac
     fi
 
 
-
+    if [ $code_found -ne 1 ]; then
+        echo "- WARN configure VSCode : code binary not detected, it might not been found inside terminal vscode."
+    fi
 
     # C/ specific cli path --------------
     case "$target" in
         "gemini" )
+            echo "- configure VSCode : add gemini cli launcher to PATH for terminal.integrated.env.linux"
             vscode_settings_add_path "${IATOOLS_GEMINI_LAUNCHER_HOME}" "ALWAYS_PREPEND"
             #vscode_settings_add_path "${IATOOLS_NODEJS_BIN_PATH}" "ALWAYS_PREPEND"
             #vscode_settings_add_path "$(command -v gemini | xargs dirname)" "ALWAYS_PREPEND"
         ;;
         "opencode" )
+            echo "- configure VSCode : add opencode cli launcher to PATH for terminal.integrated.env.linux"
             vscode_settings_add_path "${IATOOLS_OPENCODE_LAUNCHER_HOME}" "ALWAYS_PREPEND"
             #vscode_settings_add_path "${IATOOLS_NODEJS_BIN_PATH}" "ALWAYS_PREPEND"
             #vscode_settings_add_path "$(command -v opencode | xargs dirname)" "ALWAYS_PREPEND"
