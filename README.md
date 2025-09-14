@@ -1,6 +1,6 @@
 # IATools
 
-This project provides a set of tools to interact with generative AI models.
+This project provides a set of scripts to interact with ia tools and models.
 
 * Maain features
   * gemini-cli management, installation, configuration ... - https://google-gemini.github.io/gemini-cli
@@ -25,7 +25,7 @@ This project provides a set of tools to interact with generative AI models.
 
 ## Commands
 
-The `iatools <commands>` script provides the following commands:
+`iatools` provides the following commands:
 
 | Commande | Description |
 |----------|-------------|
