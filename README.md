@@ -138,4 +138,9 @@ The `iatools <commands>` script provides the following commands:
 * kilocode vsextension config home : $HOME/.vscode-server/data/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json
 * LiteLLM and gemini-cli https://docs.litellm.ai/docs/tutorials/litellm_gemini_cli
 * process manager goreman https://github.com/mattn/goreman
-* npm / npx option --registry
+* override gemini-cli with GEMINI_API_KEy, GEMINI_MODEL, GOOGLE_GEMINI_BASE_URL
+* gemini api compatible openai : 
+  * https://ai.google.dev/gemini-api/docs/openai?hl=fr#rest
+  * https://github.com/PublicAffairs/openai-gemini
+  * https://github.com/zhu327/gemini-openai-proxy https://deepwiki.com/zhu327/gemini-openai-proxy
+  * https://huggingface.co/engineofperplexity/gemini-openai-proxy/blob/main/readme.md
