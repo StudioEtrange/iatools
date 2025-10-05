@@ -355,7 +355,6 @@ main() {
                 mcp)
                     local mcp_name="$1"
                     local action="$2"
-                    local target="$3"
                     ;;
                 *)
                     echo "Error: Unknown command $sub_command for gc"
@@ -403,26 +402,29 @@ main() {
 
     # mcp submenu
     if [ ! "$mcp_name" = "" ]; then
+        [ "$action" = "" ] && echo " -- ERROR : action missing" && exit 1
         case "$mcp_name" in
             desktop-commander)
                 echo " -- mcp-desktop-commander"
                 if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;             
                 case "$action" in
                     "install")
+                        echo "    Installing"
+                        PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npx @wonderwhy-er/desktop-commander@latest setup
                         echo "    Configuring"
-                        case "$target" in
+                        case "$command" in
                             "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/desktop-commander/gemini-cli/settings.json";;
                             "oc")echo " -- ERROR : not supported";exit 1;;
-                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
+                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
                         esac
                         echo "    Configuration has been added"
                         ;;
                     "uninstall")
                         echo "    Reset configuration"
-                        case "$target" in
+                        case "$command" in
                             "gc")gemini_remove_config "mcpServers.desktop-commander";;
                             "oc")echo " -- ERROR : not supported";exit 1;;
-                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
+                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
                         esac
                         ;;
                 esac
@@ -434,22 +436,22 @@ main() {
                     "install")
                         echo "    Installing"
                         #${IATOOLS_PYTHON_BIN_PATH}pip install -v mcp-server-calculator
-                        PATH="${IATOOLS_PYTHON_BIN_PATH}:${PATH}" ${IATOOLS_PYTHON_BIN_PATH}uv pip install mcp-server-calculator --system
+                        PATH="${IATOOLS_PYTHON_BIN_PATH}:${PATH}" uv pip install mcp-server-calculator --system
                         #${IATOOLS_PYTHON_BIN_PATH}python -m uv pip install -v mcp-server-calculator
                         echo "    Configuring"
-                        case "$target" in
+                        case "$command" in
                             "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/gemini-cli/settings.json";;
                             "oc")opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/opencode/opencode.json";;
-                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
+                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
                         esac
                         echo "    Configuration has been added"
                         ;;
                     "uninstall")
                         echo "    Reset configuration"
-                        case "$target" in
+                        case "$command" in
                             "gc")gemini_remove_config "mcpServers.calculator";;
                             "oc")opencode_remove_config "mcp.calculator";;
-                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
+                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
                         esac
                         echo "    Uninstalling"
                         ${IATOOLS_PYTHON_BIN_PATH}pip uninstall -y mcp-server-calculator
@@ -462,19 +464,19 @@ main() {
                 case "$action" in
                     "install")
                         echo "    Configuring"
-                        case "$target" in
+                        case "$command" in
                             "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/gemini-cli/settings.json";;
                             "oc")opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/opencode/opencode.json";;
-                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
+                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
                         esac
                         echo "    Configuration has been added"
                         ;;
                     "uninstall")
                         echo "    Reset configuration"
-                        case "$target" in
+                        case "$command" in
                             "gc")ggemini_remove_config "mcpServers.context7";;
                             "oc")opencode_remove_config "mcp.context7";;
-                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
+                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
                         esac
                         ;;
                 esac
@@ -485,19 +487,19 @@ main() {
                 case "$action" in
                     "install")
                         echo "    Configuring"
-                        case "$target" in
+                        case "$command" in
                             "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/github/gemini-cli/settings.json";;
                             "oc")opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/github/opencode/opencode.json";;
-                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
+                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
                         esac
                         echo "    Configuration has been added"
                         ;;
                     "uninstall")
                         echo "    Reset configuration"
-                        case "$target" in
+                        case "$command" in
                             "gc")gemini_remove_config "mcpServers.github";;
                             "oc")opencode_remove_config "mcp.github";;
-                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
+                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
                         esac
                         ;;
                 esac
