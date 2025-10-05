@@ -32,7 +32,7 @@ check_requirements() {
         
         "python")
             if [ -f "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/miniforge3/bin/python" ]; then
-                [ "$mode" = "VERBOSE" ] && echo "-- python detected in ${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/mambaforge/bin/python"
+                [ "$mode" = "VERBOSE" ] && echo "-- python detected in ${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/miniforge3/bin/python"
                 return 0
             else
                 if command -v python >/dev/null 2>&1; then
