@@ -129,8 +129,8 @@ main() {
                                 fi
                             fi
                         fi
-                        # this notation do not stop case statement workflow
-                        ;&
+                    # this notation do not stop case statement workflow
+                    ;&
                     *)
                         _feature=""
                         _feature_name=""
@@ -143,7 +143,12 @@ main() {
                         else
                             echo "!! WARN : $f is not a valid feature for stella framework"
                         fi
-                        ;;
+                    # this notation do not stop case statement workflow
+                    ;&
+                    python)
+                        echo "-- install python pipx and uv package/project manager"
+                        ${IATOOLS_PYTHON_BIN_PATH}mamba install -y pipx uv
+                    ;;
                 esac
             done
             
@@ -407,7 +412,9 @@ main() {
                 case "$1" in
                     "install")
                         echo "    Installing"
-                        ${IATOOLS_PYTHON_BIN_PATH}pip install mcp-server-calculator
+                        #${IATOOLS_PYTHON_BIN_PATH}pip install -v mcp-server-calculator
+                        PATH="${IATOOLS_PYTHON_BIN_PATH}:${PATH}" ${IATOOLS_PYTHON_BIN_PATH}uv pip install mcp-server-calculator --system
+                        #${IATOOLS_PYTHON_BIN_PATH}python -m uv pip install -v mcp-server-calculator
                         echo "    Configuring"
                         case "$sub_command" in
                             "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/gemini-cli/settings.json";;
