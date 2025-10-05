@@ -131,7 +131,7 @@ main() {
                                 fi
                             fi
                         fi
-                    # this notation do not stop case statement workflow
+                    # this notation do not stop case statement workflow and continue to next pattern without testing any math
                     ;&
                     *)
                         _feature=""
@@ -145,9 +145,9 @@ main() {
                         else
                             echo "!! WARN : $f is not a valid feature for stella framework"
                         fi
-                    # this notation do not stop case statement workflow
-                    ;&
-                    python)
+                    # this notation do not stop case statement workflow and continue to next pattern by testing next pattern
+                    ;;&
+                    miniforge3)
                         echo "-- install python pipx and uv package/project manager"
                         ${IATOOLS_PYTHON_BIN_PATH}mamba install -y pipx uv
                     ;;
