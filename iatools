@@ -25,6 +25,7 @@ Options:
     gc install [@version]           Install and configure Gemini CLI. (main versions are latest, nightly, preview) (when asked to relaunch gemini cli, use 'iatools gc launch' command)
     gc uninstall                    Uninstall Gemini CLI (keeping all configuration unchanged. to remove configuration use 'iatools gc reset' command)
     gc configure                    Configure Gemini CLI. ('iatools gc install' include configuration)
+    gc show-config                  Show current Gemini CLI configuration.
     gc reset                        Reset all Gemini CLI configuration.
     gc launch [context folder] -- <other gemini options>                  Launch Gemini CLI.
     gc mcp calculator install|uninstall         Add mcp-calculator local server configuration.
@@ -39,6 +40,7 @@ Options:
     oc install                          Install and configure Opencode.
     oc uninstall                        Uninstall Opencode (keeping all configuration unchanged. to remove configuration use 'iatools oc reset' command)
     oc configure                        Configure Opencode. ('iatools oc install' include configuration)
+    oc show-config                      Show current Opencode configuration.
     oc reset                            Reset all Opencode configuration.
     oc launch [context folder] -- <other opencode options>                   Launch Opencode.
     oc mcp calculator install|uninstall         Add mcp-calculator local server configuration.
@@ -98,7 +100,7 @@ main() {
         exit 1
     fi
 
-    local command=$1
+    local command="$1"
     shift
     case "$command" in
         help)
@@ -155,7 +157,7 @@ main() {
             ;;
         oc)
             if ! check_requirements "jq"; then echo " -- ERROR : jq missing, launch iatools init"; exit 1; fi;
-            local sub_command=$1
+            local sub_command="$1"
             shift
             case "$sub_command" in
                 install)
@@ -184,6 +186,14 @@ main() {
                     vscode_settings_configure "opencode"
 
                     opencode_launcher_manage
+                    ;;
+                show-config)
+                    if [ -f "$IATOOLS_OPENCODE_CONFIG_FILE" ]; then
+                        echo "Current Opencode configuration file : $IATOOLS_OPENCODE_CONFIG_FILE"
+                        cat "$IATOOLS_OPENCODE_CONFIG_FILE"
+                    else
+                        echo "No Opencode configuration file found."
+                    fi
                     ;;
                 reset)
                     echo "Resetting Opencode configuration"
@@ -235,7 +245,7 @@ main() {
                     esac
                     ;;
                 mcp)
-                    local mcp_name=$1
+                    local mcp_name="$1"
                     shift
                     ;;
                 *)
@@ -247,7 +257,7 @@ main() {
             ;;
         gc)
             if ! check_requirements "jq"; then echo " -- ERROR : jq missing, launch iatools init"; exit 1; fi;
-            local sub_command=$1
+            local sub_command="$1"
             shift
             case "$sub_command" in
                 install)
@@ -282,6 +292,14 @@ main() {
                     vscode_settings_configure "gemini"
 
                     gemini_launcher_manage
+                    ;;
+                show-config)
+                    if [ -f "$IATOOLS_GEMINI_CONFIG_FILE" ]; then
+                        echo "Current Gemini CLI configuration file : $IATOOLS_GEMINI_CONFIG_FILE"
+                        cat "$IATOOLS_GEMINI_CONFIG_FILE"
+                    else
+                        echo "No Gemini CLI configuration file found."
+                    fi
                     ;;
                 reset)
                     echo "Resetting Gemini CLI configuration"
@@ -335,8 +353,9 @@ main() {
                     esac
                     ;;
                 mcp)
-                    local mcp_name=$1
-                    shift
+                    local mcp_name="$1"
+                    local action="$2"
+                    local target="$3"
                     ;;
                 *)
                     echo "Error: Unknown command $sub_command for gc"
@@ -347,7 +366,7 @@ main() {
             ;;
         npm-config)
             if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
-            local sub_command=$1
+            local sub_command="$1"
             shift
             case "$sub_command" in
                 set)
@@ -388,20 +407,22 @@ main() {
             desktop-commander)
                 echo " -- mcp-desktop-commander"
                 if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;             
-                case "$1" in
+                case "$action" in
                     "install")
                         echo "    Configuring"
-                        case "$sub_command" in
+                        case "$target" in
                             "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/desktop-commander/gemini-cli/settings.json";;
-                            "oc")echo "ERROR : not supported";exit 1;;
+                            "oc")echo " -- ERROR : not supported";exit 1;;
+                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
                         esac
                         echo "    Configuration has been added"
                         ;;
                     "uninstall")
                         echo "    Reset configuration"
-                        case "$sub_command" in
+                        case "$target" in
                             "gc")gemini_remove_config "mcpServers.desktop-commander";;
-                            "oc")echo "ERROR : not supported";exit 1;;
+                            "oc")echo " -- ERROR : not supported";exit 1;;
+                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
                         esac
                         ;;
                 esac
@@ -409,47 +430,51 @@ main() {
             calculator)
                 echo " -- mcp-calculator"
                 if ! check_requirements "python"; then echo " -- ERROR : python missing, launch iatools init"; exit 1; fi;
-                case "$1" in
+                case "$action" in
                     "install")
                         echo "    Installing"
                         #${IATOOLS_PYTHON_BIN_PATH}pip install -v mcp-server-calculator
                         PATH="${IATOOLS_PYTHON_BIN_PATH}:${PATH}" ${IATOOLS_PYTHON_BIN_PATH}uv pip install mcp-server-calculator --system
                         #${IATOOLS_PYTHON_BIN_PATH}python -m uv pip install -v mcp-server-calculator
                         echo "    Configuring"
-                        case "$sub_command" in
+                        case "$target" in
                             "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/gemini-cli/settings.json";;
                             "oc")opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/opencode/opencode.json";;
+                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
                         esac
                         echo "    Configuration has been added"
                         ;;
                     "uninstall")
-                        echo "    Uninstalling"
-                        ${IATOOLS_PYTHON_BIN_PATH}pip uninstall -y mcp-server-calculator
                         echo "    Reset configuration"
-                        case "$sub_command" in
+                        case "$target" in
                             "gc")gemini_remove_config "mcpServers.calculator";;
                             "oc")opencode_remove_config "mcp.calculator";;
+                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
                         esac
+                        echo "    Uninstalling"
+                        ${IATOOLS_PYTHON_BIN_PATH}pip uninstall -y mcp-server-calculator
                         ;;
                 esac
                 ;;
             context7)
                 echo " -- mcp-context7"
                 if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
-                case "$1" in
+                case "$action" in
                     "install")
                         echo "    Configuring"
-                        case "$sub_command" in
+                        case "$target" in
                             "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/gemini-cli/settings.json";;
                             "oc")opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/opencode/opencode.json";;
+                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
                         esac
                         echo "    Configuration has been added"
                         ;;
                     "uninstall")
                         echo "    Reset configuration"
-                        case "$sub_command" in
+                        case "$target" in
                             "gc")ggemini_remove_config "mcpServers.context7";;
                             "oc")opencode_remove_config "mcp.context7";;
+                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
                         esac
                         ;;
                 esac
@@ -457,20 +482,22 @@ main() {
             github)
                 echo " -- mcp-github"
                 if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
-                case "$1" in
+                case "$action" in
                     "install")
                         echo "    Configuring"
-                        case "$sub_command" in
+                        case "$target" in
                             "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/github/gemini-cli/settings.json";;
                             "oc")opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/github/opencode/opencode.json";;
+                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
                         esac
                         echo "    Configuration has been added"
                         ;;
                     "uninstall")
                         echo "    Reset configuration"
-                        case "$sub_command" in
+                        case "$target" in
                             "gc")gemini_remove_config "mcpServers.github";;
                             "oc")opencode_remove_config "mcp.github";;
+                            *)echo " -- ERROR : missing or unknown target $target";exit 1;;
                         esac
                         ;;
                 esac
