@@ -1,0 +1,16 @@
+{
+    "mcpServers": {
+        "data-commons": {
+            "command": "${IATOOLS_PYTHON_BIN_PATH}uvx",
+            "args": [
+                "datacommons-mcp@latest",
+                "serve",
+                "stdio"
+            ],
+            "env": {
+                "DC_API_KEY": "${DC_API_KEY}"
+            },
+            "trust": true
+        }
+    }
+}

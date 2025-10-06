@@ -111,6 +111,7 @@ IATools simplifies connecting to MCP (Model Context Protocol) servers, allowing 
 * **Calculator**: A simple server for performing calculations. ([Source](https://github.com/githejie/mcp-server-calculator))
 * **Context7**: Fetches up-to-date documentation and code examples. ([Source](https://github.com/upstash/context7)). https://context7.com/
 * **GitHub**: Official server for interacting with GitHub issues, PRs, and repositories. ([Source](https://github.com/github/github-mcp-server))
+* **Data Commons**: Tools and agents for interacting with the Data Commons Knowledge Graph using the Model Context Protocol (MCP). ([Source](https://github.com/datacommonsorg/agent-toolkit))
 
 
 ## Notes on underlying Framework: Stella
@@ -120,12 +121,11 @@ IATools leverages the **Stella** framework for its core functionality. Stella pr
 
 ## TODO
 
-* llxprt : gemini-cli fork : https://github.com/acoliver/llxprt-code
 * kilocode and roocode can use gemini-cli as LLM provider
 * kilocode vsextension config home : $HOME/.vscode-server/data/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json
 * LiteLLM and gemini-cli https://docs.litellm.ai/docs/tutorials/litellm_gemini_cli
 * process manager goreman https://github.com/mattn/goreman
-* override gemini-cli with GEMINI_API_KEy, GEMINI_MODEL, GOOGLE_GEMINI_BASE_URL
+* override gemini-cli with GEMINI_API_KEY, GEMINI_MODEL, GOOGLE_GEMINI_BASE_URL
 * gemini api compatible openai : 
   * https://ai.google.dev/gemini-api/docs/openai?hl=fr#rest
   * https://github.com/PublicAffairs/openai-gemini
