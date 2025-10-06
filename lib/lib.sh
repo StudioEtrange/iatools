@@ -69,6 +69,7 @@ iatools_remove_dependencies() {
     rm -Rf "${STELLA_APP_FEATURE_ROOT}"
 }
 
+# support environment variable injection in json files
 merge_json_file() {
     file_to_merge="$1"
     target_file="$2"
@@ -89,8 +90,8 @@ merge_json_file() {
     test_and_fix_json_file "$target_file"
 
     local tmp_merge="$(mktemp)"
-    # Replace ${VAR} with environnement variable if it exists or keep ${VAR} as is 
-    # if VAR exists but empty, ${VAR} is replaced with an empty string
+    # Replace ${VAR} with environnement variable if it exists or keep ${VAR} as is.
+    # if VAR exists but empty, ${VAR} is replaced with an empty string.
     if ! jq \
             'def expand_env:
                 walk(
