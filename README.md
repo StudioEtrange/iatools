@@ -20,27 +20,35 @@ IATools is a command-line application designed to streamline the installation an
 
 `iatools` provides a simple command-line interface to manage your tools and environments.
 
-| Command                             | Description                                                                 |
-| ----------------------------------- | --------------------------------------------------------------------------- |
-| **init**                            | Install/Reinstall dependencies.                                             |
-| **help**                            | Display this help message.                                                  |
+| Command                                                 | Description                                                                                                                              |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **init**                                                | Install/Reinstall dependencies.                                                                                                          |
+| **help**                                                | Display this help message.                                                                                                               |
+| **shell**                                               | Enter a sub-shell with the `iatools` environment and paths configured.                                                                    |
 | |
-| **gc install [@version]**           | Install and configure Gemini CLI (e.g., `@latest`, `@nightly`).             |
-| **gc uninstall**                    | Uninstall Gemini CLI (keeps config).                                        |
-| **gc configure**                    | Configure Gemini CLI.                                                       |
-| **gc reset**                        | Reset all Gemini CLI configuration.                                         |
-| **gc launch [ctx] -- <opts>**       | Launch Gemini CLI, optionally in a specific context folder.                 |
-| **gc cmd-plan install\|uninstall**   | Add or remove the 'plan' command to Gemini CLI.                             |
-| **gc mcp [name] install\|uninstall** | Add or remove an MCP server configuration for Gemini CLI.                   |
+| **gc install [@version]**                               | Install and configure a specific version of Gemini CLI (e.g., `@latest`, `@nightly`, `@preview`).                                        |
+| **gc uninstall**                                        | Uninstall Gemini CLI (keeps configuration).                                                                                              |
+| **gc configure**                                        | (Re)Configure Gemini CLI.                                                                                                                |
+| **gc show-config**                                      | Show the current Gemini CLI configuration.                                                                                               |
+| **gc reset**                                            | Reset all Gemini CLI configuration.                                                                                                      |
+| **gc launch [ctx] -- <opts>**                           | Launch Gemini CLI, optionally in a specific context folder, passing extra options.                                                       |
+| **gc mcp calculator install\|uninstall**                | Add or remove the `calculator` MCP server for Gemini CLI.                                                                                |
+| **gc mcp github install\|uninstall**                    | Add or remove the `github` MCP server for Gemini CLI.                                                                                    |
+| **gc mcp desktop-commander install\|uninstall**         | Add or remove the `desktop-commander` MCP server for Gemini CLI.                                                                         |
+| **gc mcp context7 install\|uninstall [CONTEXT7_API_KEY]**        | Add or remove the `context7` MCP server for Gemini CLI, with an optional API key given as argument or CONTEXT7_API_KEY.                  |
+| **gc mcp data-commons install\|uninstall [DC_API_KEY]**    | Add or remove the `data-commons` MCP server for Gemini CLI (requires an API key as argument or DC_API_KEY env var).                      |
 | |
-| **oc install**                      | Install and configure Opencode CLI.                                         |
-| **oc uninstall**                    | Uninstall Opencode CLI (keeps config).                                      |
-| **oc configure**                    | Configure Opencode CLI.                                                     |
-| **oc reset**                        | Reset all Opencode CLI configuration.                                       |
-| **oc launch [ctx] -- <opts>**       | Launch Opencode CLI, optionally in a specific context folder.               |
-| **oc mcp [name] install\|uninstall** | Add or remove an MCP server configuration for Opencode CLI.                 |
+| **oc install**                                          | Install and configure Opencode CLI.                                                                                                      |
+| **oc uninstall**                                        | Uninstall Opencode CLI (keeps configuration).                                                                                            |
+| **oc configure**                                        | (Re)Configure Opencode CLI.                                                                                                              |
+| **oc show-config**                                      | Show the current Opencode CLI configuration.                                                                                             |
+| **oc reset**                                            | Reset all Opencode CLI configuration.                                                                                                    |
+| **oc launch [ctx] -- <opts>**                           | Launch Opencode CLI, optionally in a specific context folder, passing extra options.                                                     |
+| **oc mcp calculator install\|uninstall**                | Add or remove the `calculator` MCP server for Opencode CLI.                                                                              |
+| **oc mcp github install\|uninstall**                    | Add or remove the `github` MCP server for Opencode CLI.                                                                                  |
+| **oc mcp context7 install\|uninstall**                  | Add or remove the `context7` MCP server for Opencode CLI.                                                                                |
 | |
-| **npm-config set <key> <value>**    | Set a configuration for the internal npm.                                   |
+| **npm-config set <key> <value>**                        | Set a global configuration for the internal `npm`.                                                                                       |
 
 ### How-To
 
