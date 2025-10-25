@@ -1,12 +1,12 @@
 # IATools
 
-IATools is a command-line application designed to streamline the installation and management of AI development tools, including `gemini-cli`, `opencode`, and various MCP servers.
+IATools is a command-line application designed to streamline the installation and management of AI development tools, including `gemini-cli`, `opencode` and various MCP servers.
 
 ## Key Features of IATools
 
-*   **AI Tool Management**: Streamlines the installation and configuration of AI agents like `gemini-cli` and `opencode`.
+*   **AI Tool Management**: Streamlines the installation and configuration of AI agents like `gemini-cli` and `opencode`. Provides some minimal convenient default settings.
 *   **MCP Server Integration**: Easily configure and manage connections to various MCP (Model Context Protocol) servers.
-*   **Isolated Environments**: All tools are installed into a local `workspace/` directory, preventing system-wide conflicts.
+*   **Isolated Environments**: All tools are installed into a local `workspace/` directory, preventing system-wide conflicts. Installing any agent or MCP server will not pollute in anyway your system nor your development environment path with its own dependencies (nodejs, python, ...). Everything is contained in an easy deletable internal folder.
 *   **Portability**: Bash application, works on Linux & MacOS.
 
 ## Getting Started
@@ -95,12 +95,15 @@ An open-source AI agent that brings the power of Gemini directly into your termi
 
 
 *NOTES*
+* Installing Gemini CLI with iatools set some convenient default settings
+  * disable usage statistics
+  * gemini-cli will read AGENTS.md by default
 * Gemini CLI supports MCP Prompts as slash commands
 * `/chat save` - saved chat history are in $HOME/.gemini/tmp
 * gemini 2.5 pro is only free of charge when using google auth inside gemini-cli. If you set a gemini key, by using GEMINI_API_KEY, it will not be free (even if you previously with google auth)
 
 ### Opencode CLI
-****
+
 An AI coding agent built for the terminal.
 * **Website**: [opencode.ai](https://opencode.ai)
 * **Source**: [github.com/sst/opencode](https://github.com/sst/opencode)
@@ -122,9 +125,58 @@ IATools simplifies connecting to MCP (Model Context Protocol) servers, allowing 
 * **Data Commons**: Tools and agents for interacting with the Data Commons Knowledge Graph using the Model Context Protocol (MCP). ([Source](https://github.com/datacommonsorg/agent-toolkit))
 
 
-## Notes on underlying Framework: Stella
+## Design Notes 
+
+### Notes on underlying Framework: Stella
 
 IATools leverages the **Stella** framework for its core functionality. Stella provides the infrastructure for application structure, environment isolation, and package management. **Package Management**: Stella uses a concept of "Features" (software packages) which are defined by "Recipes" (Bash scripts). `iatools` uses this system to provide all the tools it manages. The recipes are located in `pool/stella/nix/pool/feature-recipe/`.
+
+### Notes on using nodejs, npx, npm
+
+* `npx` command to needs at least `node` binary in PATH and `sh` binary in PATH
+
+* any mcp server based on node have 2 ways to be registered :
+  
+  A standard way using json in settings.json settings PATH to node binaries and `sh` (using STELLA_ORIGINAL_SYSTEM_PATH stella environment variable for reach `sh` binary)
+
+  * registered mcp server desktop-commander :
+  ```
+  {
+    "mcpServers": {
+      "desktop-commander": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@wonderwhy-er/desktop-commander"
+        ],
+        "env": {
+            "PATH": "${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}"
+        }
+      }
+    }
+  }
+  ```
+
+  Or an indirect way using a script as launcher
+  * registered mcp server context7 :
+  ```
+  {
+    "mcpServers": {
+      "context7": {
+        "command": "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
+      }
+    }
+  }
+  ```
+  * script launcher for context7 :
+  ```
+  #!/bin/sh
+  export PATH="/home/nomorgan/workspace/iatools/workspace/isolated_dependencies/nodejs/bin/:${PATH}"
+  exec "npx" -y @upstash/context7-mcp --api-key "${CONTEXT7_API_KEY}"
+  ```
+
+
+
 
 
 ## TODO

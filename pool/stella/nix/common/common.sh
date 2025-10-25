@@ -2440,6 +2440,15 @@ __resource() {
 	[ "$_opt_get" = "ON" ] && __log "INFO" "Getting resource :"
 	[ ! "$FINAL_DESTINATION" = "" ] && __log "INFO" "$NAME in $FINAL_DESTINATION" || __log "INFO" "$NAME"
 
+	if [ "${URI}" = "" ]; then
+		__log_stella "ERROR" "ressource URI empty"
+		exit 1
+	fi
+	if [ "${PROTOCOL}" = "" ]; then
+		__log_stella "ERROR" "ressource protocol empty"
+		exit 1
+	fi
+
 	#[ "$FORCE" ] && rm -Rf $FINAL_DESTINATION
 	if [ "$_opt_get" = "ON" ]; then
 		#if [ "$FORCE" ]; then
@@ -2681,13 +2690,28 @@ __uncompress() {
 				tar xf "$FILE_PATH"
 			fi
 			;;
-		*.gz | *.tgz)
-			__log "DEBUG" "GZ file detected - option strip is $_opt_strip"	
+		*.tar.gz | *.tgz)
+			__log "DEBUG" "TAR.GZ file detected - option strip is $_opt_strip"	
 			if [ "$_opt_strip" = "ON" ]; then
 				tar xzf "$FILE_PATH" --strip-components=1 2>/dev/null || __untar-strip "$FILE_PATH" "$UNZIP_DIR"
 			else
 				tar xzf "$FILE_PATH"
 			fi
+			;;
+		*.gz)
+			__require "gzip" "gzip" "SYSTEM"
+			local unzip_dir_equal_original_dir=
+			local gz_file="$UNZIP_DIR/$(basename $FILE_PATH)"
+			
+			[ -f "$gz_file" ] && unzip_dir_equal_original_dir="1"
+			[ ! "$unzip_dir_equal_original_dir" = "1" ] && cp -f "$FILE_PATH" "$gz_file"
+			
+			# gzip do not support any arborescence, so there is no strip option to support
+			# gzip unncompress only where the gz file is located
+			gzip -f -d "$gz_file"
+			
+			[ ! "$unzip_dir_equal_original_dir" = "1" ] && rm -f "$gz_file"
+			unzip_dir_equal_original_dir=
 			;;
 		*.xz | *.tar.bz2 | *.tbz2 | *.tbz)
 			if [ "$_opt_strip" = "ON" ]; then

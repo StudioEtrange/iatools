@@ -9,6 +9,7 @@ _CURRENT_RUNNING_DIR="$( cd "$( dirname "." )" && pwd )"
 . "${_CURRENT_FILE_DIR}/lib/lib_gemini.sh"
 . "${_CURRENT_FILE_DIR}/lib/lib_opencode.sh"
 
+
 # --- USAGE ---
 usage() {
     cat << EOF
@@ -448,13 +449,9 @@ main() {
                 case "$action" in
                     "install")
                         echo "    Installing"
-                        PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npx -y @wonderwhy-er/desktop-commander@latest setup
+                        PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npx @wonderwhy-er/desktop-commander@latest setup
                         echo "    Configuring"
-                        echo '#!/bin/sh' > "${IATOOLS_MCP_LAUNCHER_HOME}/desktop-commander"
-                        echo "export PATH=\"${IATOOLS_NODEJS_BIN_PATH}:\${PATH}\"" >> "${IATOOLS_MCP_LAUNCHER_HOME}/desktop-commander"
-                        echo "exec \"npx\" -y @wonderwhy-er/desktop-commander" >> "${IATOOLS_MCP_LAUNCHER_HOME}/desktop-commander"
-                        chmod +x "${IATOOLS_MCP_LAUNCHER_HOME}/desktop-commander"
-
+                        export STELLA_ORIGINAL_SYSTEM_PATH
                         case "$command" in
                             "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/desktop-commander/gemini-cli/settings.json";;
                             "oc")echo " -- ERROR : not supported";exit 1;;
@@ -470,6 +467,8 @@ main() {
                             "oc")echo " -- ERROR : not supported";exit 1;;
                             *)echo " -- ERROR : missing or unknown target $command";exit 1;;
                         esac
+                        echo "     Uninstalling"
+                        PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npx @wonderwhy-er/desktop-commander remove
                         ;;
                 esac
                 ;;
@@ -503,6 +502,7 @@ main() {
                 esac
                 ;;
             context7)
+                # launch mcp server way : using aan indirect launcher script
                 echo " -- mcp-context7"
                 if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
                 case "$action" in

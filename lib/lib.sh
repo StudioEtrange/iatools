@@ -92,6 +92,7 @@ merge_json_file() {
     local tmp_merge="$(mktemp)"
     # Replace ${VAR} with environnement variable if it exists or keep ${VAR} as is.
     # if VAR exists but empty, ${VAR} is replaced with an empty string.
+    # do NOT replace $VAR, only ${VAR}
     if ! jq \
             'def expand_env:
                 walk(
@@ -137,14 +138,30 @@ json_remove_key() {
         return
     fi
 
-    if ! jq -e ".${key_path}" "$target_file" >/dev/null 2>&1; then
+    # rebuild key path to avoid probleme with caracters in key name (like dash -)
+    #       .mcpServers.destkop-commander => ."mcpServers"."destkop-commander"
+    local -a parts=()
+    IFS='.' read -ra tmp <<< "${key_path#.}"  # enlève le . initial
+    for p in "${tmp[@]}"; do
+        [ -n "$p" ] && parts+=("$p")
+    done
+
+    local jq_expr=".\"${parts[0]}\""
+    if ((${#parts[@]} > 1)); then
+        jq_expr=".\"${parts[0]}\""
+        for ((i = 1; i < ${#parts[@]}; i++)); do
+            jq_expr+=".\"${parts[i]}\""
+        done
+    fi
+
+    if ! jq -e "${jq_expr}" "$target_file" >/dev/null 2>&1; then
         # key not found
         return
     fi
 
     local tmp_file="$(mktemp)"
 
-    jq "del(.${key_path})" "$target_file" > "$tmp_file"
+    jq 'del('${jq_expr}')' "$target_file" > "$tmp_file"
 
     if [ $? -ne 0 ]; then
         echo "ERROR : processing with jq"

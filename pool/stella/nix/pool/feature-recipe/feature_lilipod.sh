@@ -6,6 +6,9 @@ _lilipod_INCLUDED_=1
 #					https://github.com/89luca89/lilipod/issues/7 
 #					https://man7.org/linux/man-pages/man1/getsubids.1.html 
 #					https://github.com/shadow-maint/shadow/blob/master/src/getsubids.c
+#
+#		You can set LILIPOD_HOME to force lilipod to create images/containers/volumes in a specific directory.
+#		else lilipod will use XDG_DATA_HOME or fallback to $HOME/.local/share/lilipod
 
 feature_lilipod() {
 	FEAT_NAME="lilipod"
@@ -14,7 +17,7 @@ feature_lilipod() {
 	FEAT_DEFAULT_FLAVOUR="binary"
 
 
-	FEAT_DESC="Lilipod is a simple container engine, able to download, unpack and use OCI images from various container registri"
+	FEAT_DESC="Lilipod is a simple container manager, able to download, unpack and use OCI images from various container registries."
 	FEAT_LINK="https://github.com/89luca89/lilipod"
 }
 
