@@ -1,11 +1,7 @@
 {
   "mcpServers": {
     "desktop-commander": {
-      "command": "${IATOOLS_NODEJS_BIN_PATH}npx",
-      "args": [
-        "-y",
-        "@wonderwhy-er/desktop-commander"
-      ]
+      "command": "${IATOOLS_MCP_LAUNCHER_HOME}/desktop-commander"
     }
   }
 }

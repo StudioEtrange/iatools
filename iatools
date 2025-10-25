@@ -27,7 +27,10 @@ Options:
     gc configure                    Configure Gemini CLI. ('iatools gc install' include configuration)
     gc show-config                  Show current Gemini CLI configuration.
     gc reset                        Reset all Gemini CLI configuration.
-    gc launch [context folder] -- <other gemini options>                  Launch Gemini CLI.
+    gc launch [context folder] -- <other gemini options>                  
+                                    Launch Gemini CLI. You can use 'gemini' command in your terminal
+                                    put in your PATH ${IATOOLS_GEMINI_LAUNCHER_HOME}
+                                    done by default in vscode terminal.
     gc mcp calculator install|uninstall         Add mcp-calculator local server configuration.
     gc mcp github install|uninstall             Add mcp-github remote server configuration.
     gc mcp desktop-commander install|uninstall  Add mcp-desktop-commander local server configuration.
@@ -430,7 +433,7 @@ main() {
                         echo "    Configuration has been added"
                         ;;
                     "uninstall")
-                        echo "    Reset configuration"
+                        echo "    Unregister mcp server from agent"
                         case "$command" in
                             "gc")gemini_remove_config "mcpServers.data-commons";;
                             "oc")echo " -- ERROR : not supported";exit 1;;
@@ -445,8 +448,13 @@ main() {
                 case "$action" in
                     "install")
                         echo "    Installing"
-                        PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npx @wonderwhy-er/desktop-commander@latest setup
+                        PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npx -y @wonderwhy-er/desktop-commander@latest setup
                         echo "    Configuring"
+                        echo '#!/bin/sh' > "${IATOOLS_MCP_LAUNCHER_HOME}/desktop-commander"
+                        echo "export PATH=\"${IATOOLS_NODEJS_BIN_PATH}:\${PATH}\"" >> "${IATOOLS_MCP_LAUNCHER_HOME}/desktop-commander"
+                        echo "exec \"npx\" -y @wonderwhy-er/desktop-commander" >> "${IATOOLS_MCP_LAUNCHER_HOME}/desktop-commander"
+                        chmod +x "${IATOOLS_MCP_LAUNCHER_HOME}/desktop-commander"
+
                         case "$command" in
                             "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/desktop-commander/gemini-cli/settings.json";;
                             "oc")echo " -- ERROR : not supported";exit 1;;
@@ -455,7 +463,8 @@ main() {
                         echo "    Configuration has been added"
                         ;;
                     "uninstall")
-                        echo "    Reset configuration"
+                        echo "    Unregister mcp server from agent"
+                        rm -f "${IATOOLS_MCP_LAUNCHER_HOME}/desktop-commander"
                         case "$command" in
                             "gc")gemini_remove_config "mcpServers.desktop-commander";;
                             "oc")echo " -- ERROR : not supported";exit 1;;
@@ -482,7 +491,7 @@ main() {
                         echo "    Configuration has been added"
                         ;;
                     "uninstall")
-                        echo "    Reset configuration"
+                        echo "    Unregister mcp server from agent"
                         case "$command" in
                             "gc")gemini_remove_config "mcpServers.calculator";;
                             "oc")opencode_remove_config "mcp.calculator";;
@@ -514,7 +523,7 @@ main() {
                         echo "    Configuration has been added"
                         ;;
                     "uninstall")
-                        echo "    Reset configuration"
+                        echo "    Unregister mcp server from agent"
                         rm -f "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
                         case "$command" in
                             "gc")gemini_remove_config "mcpServers.context7";;
@@ -538,7 +547,7 @@ main() {
                         echo "    Configuration has been added"
                         ;;
                     "uninstall")
-                        echo "    Reset configuration"
+                        echo "    Unregister mcp server from agent"
                         case "$command" in
                             "gc")gemini_remove_config "mcpServers.github";;
                             "oc")opencode_remove_config "mcp.github";;
