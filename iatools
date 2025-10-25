@@ -8,7 +8,7 @@ _CURRENT_RUNNING_DIR="$( cd "$( dirname "." )" && pwd )"
 . "${_CURRENT_FILE_DIR}/lib/lib_vscode.sh"
 . "${_CURRENT_FILE_DIR}/lib/lib_gemini.sh"
 . "${_CURRENT_FILE_DIR}/lib/lib_opencode.sh"
-
+. "${_CURRENT_FILE_DIR}/lib/lib_mcp.sh"
 
 # --- USAGE ---
 usage() {
@@ -37,9 +37,6 @@ Options:
     gc mcp desktop-commander install|uninstall  Add mcp-desktop-commander local server configuration.
     gc mcp context7 install|uninstall   [CONTEXT7_API_KEY]        Add mcp-context7 local server configuration. Provide optional CONTEXT7_API_KEY as environment variable or command argument.
     gc mcp data commons install|uninstall [DC_API_KEY]          Add mcp-data-commons remote server configuration. Provide mandatory DC_API_KEY from https://apikeys.datacommons.org/ as environment variable or command argument.
-
-    ----
-    npm-config set <key> <value>    Set a npm configuration for the internal nodejs.
     ----
     oc : opencode - https://opencode.ai
     oc install                          Install and configure Opencode.
@@ -51,6 +48,8 @@ Options:
     oc mcp calculator install|uninstall         Add mcp-calculator local server configuration.
     oc mcp github install|uninstall             Add mcp-github remote server configuration.
     oc mcp context7 install|uninstall           Add mcp-context7 local server configuration.
+    ----
+    npm-config set <key> <value>    Set a npm configuration for the internal nodejs.
     ----
 EOF
 }
@@ -163,214 +162,6 @@ main() {
             done
             
             ;;
-        oc)
-            if ! check_requirements "jq"; then echo " -- ERROR : jq missing, launch iatools init"; exit 1; fi;
-            local sub_command="$1"
-            shift
-            case "$sub_command" in
-                install)
-                    if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
-
-                    echo "Installing Opencode CLI"
-                    PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm install --verbose -g opencode-ai@latest
-                
-                    echo "Configuring Opencode CLI"
-                    opencode_settings_configure
-                    vscode_settings_configure "opencode"
-                    
-                    opencode_launcher_manage
-                    ;;
-                uninstall)
-                    if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
-
-                    echo "Uninstalling Opencode (keeping all configuration unchanged. to remove configuration use reset command)"
-                    PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm uninstall -g opencode-ai
-
-                    opencode_launcher_manage
-                    ;;
-                configure)
-                    echo "Configuring Opencode CLI"
-                    opencode_settings_configure
-                    vscode_settings_configure "opencode"
-
-                    opencode_launcher_manage
-                    ;;
-                show-config)
-                    if [ -f "$IATOOLS_OPENCODE_CONFIG_FILE" ]; then
-                        echo "Current Opencode configuration file : $IATOOLS_OPENCODE_CONFIG_FILE"
-                        cat "$IATOOLS_OPENCODE_CONFIG_FILE"
-                    else
-                        echo "No Opencode configuration file found."
-                    fi
-                    ;;
-                reset)
-                    echo "Resetting Opencode configuration"
-                    opencode_settings_remove
-                    vscode_settings_remove "opencode"
-
-                    opencode_launcher_manage
-                    ;;
-                launch)
-                    opencode_launcher_manage
-
-                    local folder=
-                    local list_args=()
-                    local dash_found=0
-                    case "$1" in
-                        "--" | "");;
-                        *)
-                            folder="$1"
-                            shift
-                            ;;
-                    esac
-                    for arg in "$@"; do
-                        if [ "$dash_found" -eq 1 ]; then
-                            list_args+=("$arg")
-                        elif [ "$arg" = "--" ]; then
-                            dash_found=1
-                        fi
-                    done
-                    case "$folder" in
-                        "")
-                            if [ ${#list_args[@]} -gt 0 ]; then
-                                opencode "${list_args[@]}"
-                            else
-                                opencode
-                            fi
-                            ;;
-                        *)
-                            if [ -d "$folder" ]; then
-                                if [ ${#list_args[@]} -gt 0 ]; then
-                                    opencode "$folder" "${list_args[@]}"
-                                else
-                                    opencode "$folder"
-                                fi
-                             else
-                                echo "Error: Directory '$folder' not found"
-                                exit 1
-                            fi
-                            ;;
-                    esac
-                    ;;
-                mcp)
-                    local mcp_name="$1"
-                    shift
-                    ;;
-                *)
-                    echo "Error: Unknown command $sub_command for oc"
-                    usage
-                    exit 1
-                    ;;
-            esac
-            ;;
-        gc)
-            if ! check_requirements "jq"; then echo " -- ERROR : jq missing, launch iatools init"; exit 1; fi;
-            local sub_command="$1"
-            shift
-            case "$sub_command" in
-                install)
-                    if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
-
-                    local version="$1"
-                    [ -z "${version}" ] && version="@latest"
-
-                    echo "Installing Gemini CLI ${version}"
-                    # available versions : https://www.npmjs.com/package/@google/gemini-cli-core
-                    # latest is stable version
-                    # 2025/09/13 : cannot install behind a http proxy : https://github.com/google-gemini/gemini-cli/issues/7795
-                    PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm install --verbose -g @google/gemini-cli${version}
-                    
-                    echo "Configuring Gemini CLI"
-                    gemini_settings_configure
-                    vscode_settings_configure "gemini"
-
-                    gemini_launcher_manage
-                    ;;
-                uninstall)
-                    if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
-
-                    echo "Uninstalling Gemini CLI (keeping all configuration unchanged. to remove configuration use reset command)"
-                    PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm uninstall -g @google/gemini-cli
-
-                    gemini_launcher_manage
-                    ;;
-                configure)
-                    echo "Configuring Gemini CLI"
-                    gemini_settings_configure
-                    vscode_settings_configure "gemini"
-
-                    gemini_launcher_manage
-                    ;;
-                show-config)
-                    if [ -f "$IATOOLS_GEMINI_CONFIG_FILE" ]; then
-                        echo "Current Gemini CLI configuration file : $IATOOLS_GEMINI_CONFIG_FILE"
-                        cat "$IATOOLS_GEMINI_CONFIG_FILE"
-                    else
-                        echo "No Gemini CLI configuration file found."
-                    fi
-                    ;;
-                reset)
-                    echo "Resetting Gemini CLI configuration"
-                    gemini_settings_remove
-                    vscode_settings_remove "gemini"
-
-                    gemini_launcher_manage
-                    ;;
-                launch)
-                    gemini_launcher_manage
-
-                    local folder=
-                    local list_args=()
-                    local dash_found=0
-                    case "$1" in
-                        "--" | "");;
-                        *)
-                            folder="$1"
-                            shift
-                            ;;
-                    esac
-                    for arg in "$@"; do
-                        if [ "$dash_found" -eq 1 ]; then
-                            list_args+=("$arg")
-                        elif [ "$arg" = "--" ]; then
-                            dash_found=1
-                        fi
-                    done
-                    if [ ! -z "$folder" ]; then
-                        if [ -d "$folder" ]; then
-                            cd "$folder"
-                        else
-                            echo "Error: Directory '$folder' not found"
-                            exit 1
-                        fi
-                    fi
-                    if [ ${#list_args[@]} -gt 0 ]; then
-                        gemini "${list_args[@]}"
-                    else
-                        gemini
-                    fi
-                    ;;
-                cmd-plan)
-                    case "$1" in
-                        "install")
-                            gemini_add_command "${_CURRENT_FILE_DIR}/pool/cmd/plan/plan.toml"
-                            ;;
-                        "uninstall")
-                            gemini_remove_command "plan.toml"
-                            ;;
-                    esac
-                    ;;
-                mcp)
-                    local mcp_name="$1"
-                    local action="$2"
-                    ;;
-                *)
-                    echo "Error: Unknown command $sub_command for gc"
-                    usage
-                    exit 1
-                    ;;
-            esac
-            ;;
         npm-config)
             if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
             local sub_command="$1"
@@ -396,6 +187,12 @@ main() {
                     ;;
             esac
             ;;
+        oc)
+            . "${_CURRENT_FILE_DIR}/lib/main_oc.sh"
+            ;;
+        gc)
+            . "${_CURRENT_FILE_DIR}/lib/main_gc.sh"
+            ;;
         *)
             echo "Error: Unknown command $command"
             usage
@@ -403,166 +200,7 @@ main() {
             ;;
     esac
 
-
-
-
-
-
-    # mcp submenu
-    if [ ! "$mcp_name" = "" ]; then
-        [ "$action" = "" ] && echo " -- ERROR : action missing" && exit 1
-        case "$mcp_name" in
-            data-commons)
-                echo " -- data-commons"
-                if ! check_requirements "python"; then echo " -- ERROR : python missing, launch iatools init"; exit 1; fi;             
-                case "$action" in
-                    "install")
-                        echo "    Configuring"
-                        [ ! -z "$3" ] && export DC_API_KEY="$3"
-                        if [ -z "$DC_API_KEY" ]; then
-                            echo " -- ERROR : missing Data Commons API key"
-                            echo "    Provide a DC_API_KEY environment variable OR as third argument of the command"
-                            echo "    You can get one from https://apikeys.datacommons.org/"
-                            exit 1
-                        fi
-                        echo "    Provided DC_API_KEY for Data Commons API key from https://apikeys.datacommons.org/ : $DC_API_KEY"
-                        case "$command" in
-                            "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/data-commons/gemini-cli/settings.json";;
-                            "oc")echo " -- ERROR : not supported";exit 1;;
-                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
-                        esac
-                        echo "    Configuration has been added"
-                        ;;
-                    "uninstall")
-                        echo "    Unregister mcp server from agent"
-                        case "$command" in
-                            "gc")gemini_remove_config "mcpServers.data-commons";;
-                            "oc")echo " -- ERROR : not supported";exit 1;;
-                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
-                        esac
-                        ;;
-                esac
-                ;;
-            desktop-commander)
-                echo " -- mcp-desktop-commander"
-                if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;             
-                case "$action" in
-                    "install")
-                        echo "    Installing"
-                        PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npx -y @wonderwhy-er/desktop-commander@latest setup
-                        echo "    Configuring"
-                        export STELLA_ORIGINAL_SYSTEM_PATH
-                        case "$command" in
-                            "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/desktop-commander/gemini-cli/settings.json";;
-                            "oc")echo " -- ERROR : not supported";exit 1;;
-                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
-                        esac
-                        echo "    Configuration has been added"
-                        ;;
-                    "uninstall")
-                        echo "    Unregister mcp server from agent"
-                        rm -f "${IATOOLS_MCP_LAUNCHER_HOME}/desktop-commander"
-                        case "$command" in
-                            "gc")gemini_remove_config "mcpServers.desktop-commander";;
-                            "oc")echo " -- ERROR : not supported";exit 1;;
-                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
-                        esac
-                        echo "     Uninstalling"
-                        PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npx @wonderwhy-er/desktop-commander remove
-                        ;;
-                esac
-                ;;
-            calculator)
-                echo " -- mcp-calculator"
-                if ! check_requirements "python"; then echo " -- ERROR : python missing, launch iatools init"; exit 1; fi;
-                case "$action" in
-                    "install")
-                        echo "    Installing"
-                        #${IATOOLS_PYTHON_BIN_PATH}pip install -v mcp-server-calculator
-                        PATH="${IATOOLS_PYTHON_BIN_PATH}:${PATH}" uv pip install mcp-server-calculator --system
-                        #${IATOOLS_PYTHON_BIN_PATH}python -m uv pip install -v mcp-server-calculator
-                        echo "    Configuring"
-                        case "$command" in
-                            "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/gemini-cli/settings.json";;
-                            "oc")opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/opencode/opencode.json";;
-                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
-                        esac
-                        echo "    Configuration has been added"
-                        ;;
-                    "uninstall")
-                        echo "    Unregister mcp server from agent"
-                        case "$command" in
-                            "gc")gemini_remove_config "mcpServers.calculator";;
-                            "oc")opencode_remove_config "mcp.calculator";;
-                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
-                        esac
-                        echo "    Uninstalling"
-                        ${IATOOLS_PYTHON_BIN_PATH}pip uninstall -y mcp-server-calculator
-                        ;;
-                esac
-                ;;
-            context7)
-                # launch mcp server way : using aan indirect launcher script
-                echo " -- mcp-context7"
-                if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
-                case "$action" in
-                    "install")
-                        echo "    Configuring"
-                        echo '#!/bin/sh' > "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
-                        echo "export PATH=\"${IATOOLS_NODEJS_BIN_PATH}:\${PATH}\"" >> "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
-                        echo "exec \"npx\" -y @upstash/context7-mcp --api-key \"\${CONTEXT7_API_KEY}\"" >> "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
-                        chmod +x "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
-
-                        [ ! -z "$3" ] && export CONTEXT7_API_KEY="$3"                        
-                        echo "    Provided optional CONTEXT7_API_KEY : $CONTEXT7_API_KEY"
-                        case "$command" in
-                            "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/gemini-cli/settings.json";;
-                            "oc")opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/opencode/opencode.json";;
-                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
-                        esac
-                        echo "    Configuration has been added"
-                        ;;
-                    "uninstall")
-                        echo "    Unregister mcp server from agent"
-                        rm -f "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
-                        case "$command" in
-                            "gc")gemini_remove_config "mcpServers.context7";;
-                            "oc")opencode_remove_config "mcp.context7";;
-                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
-                        esac
-                        ;;
-                esac
-                ;;
-            github)
-                echo " -- mcp-github"
-                if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
-                case "$action" in
-                    "install")
-                        echo "    Configuring"
-                        case "$command" in
-                            "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/github/gemini-cli/settings.json";;
-                            "oc")opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/github/opencode/opencode.json";;
-                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
-                        esac
-                        echo "    Configuration has been added"
-                        ;;
-                    "uninstall")
-                        echo "    Unregister mcp server from agent"
-                        case "$command" in
-                            "gc")gemini_remove_config "mcpServers.github";;
-                            "oc")opencode_remove_config "mcp.github";;
-                            *)echo " -- ERROR : missing or unknown target $command";exit 1;;
-                        esac
-                        ;;
-                esac
-                ;;
-            *)
-                echo "Error: Unknown mcp $mcp_name"
-                usage
-                exit 1
-                ;;
-        esac
-    fi
+    
 }
 
 
