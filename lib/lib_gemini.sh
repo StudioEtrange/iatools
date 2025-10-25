@@ -31,6 +31,11 @@ gemini_launcher_manage() {
 
 
 gemini_settings_configure() {
+    echo "add some default settings :"
+    echo " - disable statistics usage data send"
+    echo " - support for autoloading AGENTS.md file"
+    cat "${_CURRENT_FILE_DIR}/pool/settings/gemini-cli/settings.json"
+    printf "\n"
     merge_json_file "${_CURRENT_FILE_DIR}/pool/settings/gemini-cli/settings.json" "$IATOOLS_GEMINI_CONFIG_FILE"
 }
 

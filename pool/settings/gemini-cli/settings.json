@@ -1,5 +1,6 @@
 {
   "privacy": {
     "usageStatisticsEnabled": false
-  }
+  },
+  "contextFileName": "AGENTS.md"
 }
