@@ -12,7 +12,7 @@ case "$sub_command" in
         # available versions : https://www.npmjs.com/package/@google/gemini-cli-core
         # latest is stable version
         # 2025/09/13 : cannot install behind a http proxy : https://github.com/google-gemini/gemini-cli/issues/7795
-        PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm install --verbose -g @google/gemini-cli${version}
+        PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npm install --verbose -g @google/gemini-cli${version}
         
         echo "Configuring Gemini CLI"
         gemini_settings_configure
@@ -24,7 +24,7 @@ case "$sub_command" in
         if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
 
         echo "Uninstalling Gemini CLI (keeping all configuration unchanged. to remove configuration use reset command)"
-        PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm uninstall -g @google/gemini-cli
+        PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npm uninstall -g @google/gemini-cli
 
         gemini_launcher_manage
         ;;
