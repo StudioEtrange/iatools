@@ -1,7 +1,14 @@
 {
   "mcpServers": {
     "desktop-commander": {
-      "command": "${IATOOLS_MCP_LAUNCHER_HOME}/desktop-commander"
+      "command": "npx",
+      "args": [
+        "-y",
+        "@wonderwhy-er/desktop-commander"
+      ],
+      "env": {
+          "PATH": "${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}"
+      }
     }
   }
 }
