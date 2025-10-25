@@ -59,7 +59,7 @@ vscode_settings_configure() {
     if [ -d "$HOME/.vscode-server" ]; then
         # remote linux server
         if [ -d "$HOME/.vscode-server/cli/servers" ] && [ "$(ls -A "$HOME/.vscode-server/cli/servers/Stable-"* 2>/dev/null)" ]; then
-            vscode_remote_home="$(ls -1dt "$HOME/.vscode-server/cli/servers/Stable-"* | head -n 1 | xargs -I {} echo {}/server)"
+            vscode_remote_home="$(ls -1dt "$HOME/.vscode-server/cli/servers/Stable-"* | grep -v '/legacy-mode$' | head -n 1 | xargs -I {} echo {}/server)"
             vscode_remote_cli_path="$vscode_remote_home/bin/remote-cli"
 
             if [ -f "${vscode_remote_cli_path}/code" ]; then
@@ -74,7 +74,7 @@ vscode_settings_configure() {
         if grep -qi microsoft /proc/version 2>/dev/null; then
             echo "- configure VSCode : WSL detected"
             if [ -d "$HOME/.vscode-server/bin" ] && [ "$(ls -A "$HOME/.vscode-server/bin/"* 2>/dev/null)" ]; then
-                vscode_remote_home="$(ls -1dt "$HOME/.vscode-server/bin/"* | head -n 1 | xargs -I {} echo {})"
+                vscode_remote_home="$(ls -1dt "$HOME/.vscode-server/bin/"* | grep -v '/legacy-mode$' | head -n 1 | xargs -I {} echo {})"
                 vscode_remote_cli_path="$vscode_remote_home/bin/remote-cli"
 
                 if [ -f "${vscode_remote_cli_path}/code" ]; then
