@@ -6,7 +6,7 @@ case "$sub_command" in
         if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
 
         echo "Installing Opencode CLI"
-        PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm install --verbose -g opencode-ai@latest
+        PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npm install --verbose -g opencode-ai@latest
     
         echo "Configuring Opencode CLI"
         opencode_settings_configure
@@ -18,7 +18,7 @@ case "$sub_command" in
         if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
 
         echo "Uninstalling Opencode (keeping all configuration unchanged. to remove configuration use reset command)"
-        PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm uninstall -g opencode-ai
+        PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npm uninstall -g opencode-ai
 
         opencode_launcher_manage
         ;;
