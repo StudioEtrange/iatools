@@ -449,7 +449,7 @@ main() {
                 case "$action" in
                     "install")
                         echo "    Installing"
-                        PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npx @wonderwhy-er/desktop-commander@latest setup
+                        PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npx -y @wonderwhy-er/desktop-commander@latest setup
                         echo "    Configuring"
                         export STELLA_ORIGINAL_SYSTEM_PATH
                         case "$command" in
