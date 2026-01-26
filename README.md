@@ -193,6 +193,9 @@ IATools leverages the **Stella** framework for its core functionality. Stella pr
   * https://huggingface.co/engineofperplexity/gemini-openai-proxy/blob/main/readme.md
 
 
+## Contributors
+
+See the [CONTRIBUTORS](CONTRIBUTORS) file for the full list of contributors
 
 ## License
 
