@@ -1,7 +1,103 @@
 
 
 
+iatools_path() {
+    export IATOOLS_LAUNCHER_HOME="${STELLA_APP_WORK_ROOT}/launcher"
+    mkdir -p "${IATOOLS_LAUNCHER_HOME}"
 
+    export IATOOLS_MCP_LAUNCHER_HOME="${IATOOLS_LAUNCHER_HOME}/mcp"
+    mkdir -p "${IATOOLS_MCP_LAUNCHER_HOME}"
+
+    export IATOOLS_ISOLATED_DEPENDENCIES_ROOT="${STELLA_APP_WORK_ROOT}/isolated_dependencies"
+    mkdir -p "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}"
+
+    gemini_path
+    opencode_path
+    vscode_path
+}
+
+
+runtime_path() {
+    # add launchers to current path
+    export PATH="${IATOOLS_GEMINI_LAUNCHER_HOME}:${IATOOLS_OPENCODE_LAUNCHER_HOME}:${PATH}"
+
+    # NOTE : we do not permanently add runtime paths (nodejs, python, ...)  to current system path to not override eventually existing runtime
+    # used by gemini, opencode and several MCP local server
+    if check_requirements "nodejs" "VERBOSE"; then
+        export IATOOLS_NODEJS_BIN_PATH="${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/nodejs/bin/"
+    else
+        # we use an already installed nodejs, not iatools nodejs
+        export IATOOLS_NODEJS_BIN_PATH=""
+    fi
+    
+    # used by MCP local server
+    if check_requirements "python" "VERBOSE"; then
+        export IATOOLS_PYTHON_BIN_PATH="${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/miniforge3/bin/"
+    else
+        # we use an already installed python, not iatools python
+        export IATOOLS_PYTHON_BIN_PATH=""
+    fi
+
+}
+
+
+
+iatools_install_dependencies() {
+
+    echo "- Install internal dependencies for iatools (which will be added to iatools PATH while running)"
+    $STELLA_API get_feature "jq"
+
+    echo "- Install other dependencies (for mcp servers and other commands) in an isolated way. (None of those will never been added to any PATH)"
+    for f in $STELLA_APP_FEATURE_LIST; do
+        case "$f" in
+            jq*);;
+            nodejs)
+                if [ "$STELLA_CURRENT_PLATFORM" = "linux" ]; then
+                    if [ "$STELLA_CURRENT_CPU_FAMILY" = "intel" ]; then
+                        _ldd_version="$(ldd --version 2>/dev/null | awk '/ldd/{print $NF}')"
+                        if [ "${_ldd_version}" = "2.17" ]; then
+                            f="nodejs#23_7_0_glibc_217"
+                            echo "-- detected glibc 2.17 switch to nodejs special build for it"
+                        fi
+                    fi
+                fi
+            # this notation do not stop case statement workflow and continue to next pattern without testing any match
+            ;&
+            *)
+                _feature=""
+                _feature_name=""
+
+                $STELLA_API select_official_schema "$f" "_feature" "_feature_name"
+                if [ ! "$_feature" = "" ]; then
+                    echo "-- install $_feature"
+                    mkdir -p "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/${_feature_name}"
+                    $STELLA_API feature_install "$f" "EXPORT ${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/${_feature_name}"
+                else
+                    echo "!! WARN : $f is not a valid feature for stella framework"
+                fi
+            # this notation do not stop case statement workflow and continue to next pattern by testing next pattern
+            ;;&
+            miniforge3)
+                echo "-- install python pipx and uv package/project manager"
+                ${IATOOLS_PYTHON_BIN_PATH}mamba install -y pipx uv
+            ;;
+        esac
+    done
+}
+
+
+iatools_remove_dependencies() {
+    # remove isolated dependencies and runtime
+    rm -Rf "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}"
+    # remove dependencies
+    rm -Rf "${STELLA_APP_FEATURE_ROOT}"
+}
+
+
+iatools_init() {
+    iatools_remove_dependencies
+    iatools_install_dependencies
+}
 
 # check availability
 check_requirements() {
@@ -55,180 +151,13 @@ require() {
             if ! PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" type json5 >/dev/null 2>&1; then
                 # install json5 nodejs package (to correct invalid json)
                 # https://github.com/json5/json5
-                PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm install -g json5
+                PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" npm install -g json5 1>/dev/null
+                [ $? -ne 0 ] && {
+                    echo "ERROR : installing json5 nodejs package"
+                    return 1
+                }
             fi
             ;;
 
     esac
-}
-
-iatools_remove_dependencies() {
-    # remove isolated dependencies and runtime
-    rm -Rf "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}"
-    # remove dependencies
-    rm -Rf "${STELLA_APP_FEATURE_ROOT}"
-}
-
-# support environment variable injection in json files
-merge_json_file() {
-    file_to_merge="$1"
-    target_file="$2"
-
-    if [ ! -f "$file_to_merge" ]; then
-        echo "ERROR : file to merge not found $file_to_merge"
-        exit 1
-    fi
-
-    test_and_fix_json_file "$file_to_merge"
-
-    if [ ! -s "$target_file" ]; then
-        echo "Valid target file not found at $target_file. Creating it."
-        mkdir -p "$(dirname "$target_file")"
-        echo "{}" > "$target_file"
-    fi
-
-    test_and_fix_json_file "$target_file"
-
-    local tmp_merge="$(mktemp)"
-    # Replace ${VAR} with environnement variable if it exists or keep ${VAR} as is.
-    # if VAR exists but empty, ${VAR} is replaced with an empty string.
-    # do NOT replace $VAR, only ${VAR}
-    if ! jq \
-            'def expand_env:
-                walk(
-                    if type=="string" then
-                        gsub("\\$\\{(?<k>[A-Za-z_][A-Za-z0-9_]*)\\}"; (env[.k] // ("${"+.k+"}")))
-                    else 
-                        . 
-                    end
-                    );
-            expand_env
-    ' "$file_to_merge" > "$tmp_merge"; then
-        echo "ERROR : expanding environment variables in $file_to_merge" >&2
-        exit 1
-    fi
-
-    test_and_fix_json_file "$tmp_merge"
-
-    local tmp_file="$(mktemp)"
-    # Merge the two json files
-    jq -s '.[0] * .[1]' "${target_file}" "$tmp_merge" > "$tmp_file"
-    
-    if [ $? -ne 0 ]; then
-        rm -f "$tmp_file" "$tmp_merge"
-        exit 1
-    else
-        mv "$tmp_file" "$target_file"
-        rm -f "$tmp_file" "$tmp_merge"
-    fi
-}
-
-
-json_remove_key() {
-    key_path="$1"
-    target_file="$2"
-
-    if [ -z "$key_path" ]; then
-        echo "ERROR : json key path to remove empty"
-        exit 1
-    fi
-
-    if [ ! -s "$target_file" ]; then
-        echo "WARN : file not found $target_file" >&2
-        return
-    fi
-
-    # rebuild key path to avoid probleme with caracters in key name (like dash -)
-    #       .mcpServers.destkop-commander => ."mcpServers"."destkop-commander"
-    local -a parts=()
-    IFS='.' read -ra tmp <<< "${key_path#.}"  # enlève le . initial
-    for p in "${tmp[@]}"; do
-        [ -n "$p" ] && parts+=("$p")
-    done
-
-    local jq_expr=".\"${parts[0]}\""
-    if ((${#parts[@]} > 1)); then
-        jq_expr=".\"${parts[0]}\""
-        for ((i = 1; i < ${#parts[@]}; i++)); do
-            jq_expr+=".\"${parts[i]}\""
-        done
-    fi
-
-    if ! jq -e "${jq_expr}" "$target_file" >/dev/null 2>&1; then
-        # key not found
-        return
-    fi
-
-    local tmp_file="$(mktemp)"
-
-    jq 'del('${jq_expr}')' "$target_file" > "$tmp_file"
-
-    if [ $? -ne 0 ]; then
-        echo "ERROR : processing with jq"
-        rm -f "$tmp_file"
-        exit 1
-    else
-        mv "$tmp_file" "$target_file"
-        rm -f "$tmp_file"
-    fi
-}
-
-# format and fix invalid json (i.e: remove last comma at the end of a json object)
-# can be used in a stream :
-#       echo '{ "to" :"",}' | sanitize_json
-#       sanitize_json - < file.json 
-# or if a file is passed as argument 1, the file will be sanitize itself
-#       sanitize_json "file.json"
-#
-# json5 options
-#   -s : size of indentation
-#   -c : convert inplace without making output file https://github.com/json5/json5/blob/main/lib/cli.js#L87
-sanitize_json() {
-    file="$1"
-
-    require "json5"
-    
-    if [ -n "$file" ] && [ "$file" != "-" ]; then
-        if [ ! -f "$file" ]; then
-            echo "ERROR : file not found: $file"
-            return 1
-        fi
-
-        local tmp_file="$(mktemp)"
-
-        PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" json5 -s 2 "$file" 2>/dev/null >"$tmp_file" 
-        if [ $? -ne 0 ]; then
-            echo "ERROR : failed to sanitize json from $file"
-            rm -f "$tmp_file"
-            return 1
-        else
-            mv "$tmp_file" "$file"
-            return 0
-        fi
-    fi
-
-    # parse sream
-    PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" json5 -s 2
-}
-
-test_and_fix_json_file() {
-    file_to_test="$1"
-
-    if [ ! -f "$file_to_test" ]; then
-        echo "ERROR : file not found $file_to_test"
-        exit 1
-    fi
-
-    if ! jq -e . "$file_to_test" >/dev/null 2>&1; then
-        echo "WARN : invalid json file : $file_to_test"
-        echo "       try to sanitize it"
-        sanitize_json "$file_to_test"
-        if ! jq -e . "$file_to_test" >/dev/null 2>&1; then
-            echo "ERROR : invalid json file : $file_to_test"
-            exit 1
-        else
-        echo "       it should be a valid json file now"
-        fi
-    fi
-
 }

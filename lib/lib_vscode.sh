@@ -135,6 +135,32 @@ vscode_settings_remove() {
     esac
 }
 
+# generic config management -----------------
+vscode_merge_config() {
+    file_to_merge="$1"
+    merge_json_file "$file_to_merge" "$IATOOLS_VSCODE_CONFIG_FILE"
+}
+
+vscode_remove_config() {
+    key_path="$1"
+    json_remove_key "$key_path" "$IATOOLS_VSCODE_CONFIG_FILE"
+}
+
+
+# http proxy management ------------------------
+vscode_settings_set_http_proxy() {
+    # TODO
+    http_proxy="$1"
+}
+
+
+vscode_settings_remove_http_proxy() {
+    vscode_remove_config "http.proxy"
+    # vscode_remove_config "https.proxy"
+    vscode_remove_config "http.noProxy"
+}
+
+# path management ------------------------
 vscode_settings_add_path() {
     path_expression_to_add="$1"
     # ALWAYS_PREPEND add path or move it at the beginning position

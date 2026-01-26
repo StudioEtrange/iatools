@@ -4,7 +4,9 @@ _CURRENT_RUNNING_DIR="$( cd "$( dirname "." )" && pwd )"
 
 
 . "${_CURRENT_FILE_DIR}/stella-link.sh" include
+
 . "${_CURRENT_FILE_DIR}/lib/lib.sh"
+. "${_CURRENT_FILE_DIR}/lib/lib_json.sh"
 . "${_CURRENT_FILE_DIR}/lib/lib_vscode.sh"
 . "${_CURRENT_FILE_DIR}/lib/lib_gemini.sh"
 . "${_CURRENT_FILE_DIR}/lib/lib_opencode.sh"
@@ -54,46 +56,6 @@ Options:
 EOF
 }
 
-iatools_path() {
-    export IATOOLS_LAUNCHER_HOME="${STELLA_APP_WORK_ROOT}/launcher"
-    mkdir -p "${IATOOLS_LAUNCHER_HOME}"
-
-    export IATOOLS_MCP_LAUNCHER_HOME="${IATOOLS_LAUNCHER_HOME}/mcp"
-    mkdir -p "${IATOOLS_MCP_LAUNCHER_HOME}"
-
-    export IATOOLS_ISOLATED_DEPENDENCIES_ROOT="${STELLA_APP_WORK_ROOT}/isolated_dependencies"
-    mkdir -p "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}"
-
-    gemini_path
-    opencode_path
-    vscode_path
-}
-
-
-runtime_path() {
-    # add launchers to current path
-    export PATH="${IATOOLS_GEMINI_LAUNCHER_HOME}:${IATOOLS_OPENCODE_LAUNCHER_HOME}:${PATH}"
-
-    # NOTE : we do not permanently add runtime paths (nodejs, python, ...)  to current system path to not override eventually existing runtime
-    # used by gemini, opencode and several MCP local server
-    if check_requirements "nodejs" "VERBOSE"; then
-        export IATOOLS_NODEJS_BIN_PATH="${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/nodejs/bin/"
-    else
-        # we use an already installed nodejs, not iatools nodejs
-        export IATOOLS_NODEJS_BIN_PATH=""
-    fi
-    
-    # used by MCP local server
-    if check_requirements "python" "VERBOSE"; then
-        export IATOOLS_PYTHON_BIN_PATH="${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/miniforge3/bin/"
-    else
-        # we use an already installed python, not iatools python
-        export IATOOLS_PYTHON_BIN_PATH=""
-    fi
-
-}
-
-
 
 # Main function
 main() {
@@ -118,49 +80,7 @@ main() {
             $STELLA_API boot_app_shell "local"
             ;;
         init)
-            # remove dependencies first, to always install from scratch
-            iatools_remove_dependencies
-
-            echo "- Install internal dependencies for iatools (which will be added to iatools PATH while running)"
-            $STELLA_API get_feature "jq"
-
-            echo "- Install other dependencies (for mcp servers and other commands) in an isolated way. (None of those will never been added to any PATH)"
-            for f in $STELLA_APP_FEATURE_LIST; do
-                case "$f" in
-                    jq*);;
-                    nodejs)
-                        if [ "$STELLA_CURRENT_PLATFORM" = "linux" ]; then
-		                    if [ "$STELLA_CURRENT_CPU_FAMILY" = "intel" ]; then
-                                _ldd_version="$(ldd --version 2>/dev/null | awk '/ldd/{print $NF}')"
-                                if [ "${_ldd_version}" = "2.17" ]; then
-                                    f="nodejs#23_7_0_glibc_217"
-                                    echo "-- detected glibc 2.17 switch to nodejs special build for it"
-                                fi
-                            fi
-                        fi
-                    # this notation do not stop case statement workflow and continue to next pattern without testing any math
-                    ;&
-                    *)
-                        _feature=""
-                        _feature_name=""
-
-                        $STELLA_API select_official_schema "$f" "_feature" "_feature_name"
-                        if [ ! "$_feature" = "" ]; then
-                            echo "-- install $_feature"
-                            mkdir -p "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/${_feature_name}"
-                            $STELLA_API feature_install "$f" "EXPORT ${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/${_feature_name}"
-                        else
-                            echo "!! WARN : $f is not a valid feature for stella framework"
-                        fi
-                    # this notation do not stop case statement workflow and continue to next pattern by testing next pattern
-                    ;;&
-                    miniforge3)
-                        echo "-- install python pipx and uv package/project manager"
-                        ${IATOOLS_PYTHON_BIN_PATH}mamba install -y pipx uv
-                    ;;
-                esac
-            done
-            
+            iatools_init
             ;;
         npm-config)
             if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;

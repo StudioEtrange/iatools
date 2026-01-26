@@ -1,0 +1,63 @@
+#!/bin/bash
+_CURRENT_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+_CURRENT_RUNNING_DIR="$( cd "$( dirname "${BASH_SOURCE[1]}" )" && pwd )"
+
+#STELLA_LOG_STATE=OFF
+. "$_CURRENT_FILE_DIR/stella-link.sh" include
+
+$STELLA_API require "bats" "bats" "INTERNAL"
+
+
+function init_iatools_test_env() {
+	# create a temporary working directory for tests
+	mkdir -p "$STELLA_APP_WORK_ROOT"
+
+	# load iatools libraries
+	. "$STELLA_APP_ROOT/../lib/lib.sh"
+	. "$STELLA_APP_ROOT/../lib/lib_json.sh"
+	. "$STELLA_APP_ROOT/../lib/lib_vscode.sh"
+	. "$STELLA_APP_ROOT/../lib/lib_gemini.sh"
+	. "$STELLA_APP_ROOT/../lib/lib_opencode.sh"
+	. "$STELLA_APP_ROOT/../lib/lib_mcp.sh"
+
+	# initialize iatools paths
+	iatools_path 1>/dev/null 2>&1
+	runtime_path 1>/dev/null 2>&1
+
+	# install dependencies
+	( iatools_install_dependencies 1>/dev/null 2>&1 )
+}
+
+function test_launch_bats() {
+	local domain="$1"
+	# regular expression that will match tests functions names
+	local filter="$2"
+
+	local _v=$(mktmp)
+	declare >"$_v"
+	declare -f >>"$_v"
+
+	if [ "$filter" = "" ]; then
+		__BATS_STELLA_DECLARE="$_v" bats --verbose-run "$STELLA_APP_ROOT/test/test_$domain.bats"
+	else
+		__BATS_STELLA_DECLARE="$_v" bats --verbose-run "$STELLA_APP_ROOT/test/test_$domain.bats" -f ${filter}
+	fi
+	rm -f "$_v"
+}
+
+STELLA_LOG_STATE=ON
+case $1 in
+  h|help|--help|-h)
+    echo " * Usage $0 common|all [test-name]"
+	echo "sample:"
+	echo "$0 common test1"
+    ;;
+  all|"" )
+	init_iatools_test_env
+    test_launch_bats common $2
+    ;;
+  * )
+	init_iatools_test_env
+    test_launch_bats $1 $2
+    ;;
+esac

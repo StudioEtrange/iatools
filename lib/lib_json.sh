@@ -1,0 +1,365 @@
+
+#GLOBAL_JQ_OPTIONS="--indent 4"
+
+# ----------------------------------- JSON UTILITIES -----------------------------------
+# build a JSON array for jq
+# build_jq_array_from_path <key_path>
+#
+# build_jq_array_from_path ".a.b.c"
+#          ["a","b","c"]
+build_jq_array_from_path() {
+    local key_path="$1"
+
+    [ -n "$key_path" ] || { echo "ERROR: key_path empty" >&2; return 1; }
+
+    local -a parts=() tmp=()
+    local p
+
+    IFS='.' read -r -a tmp <<< "${key_path#.}"
+    for p in "${tmp[@]}"; do
+        [ -n "$p" ] && parts+=("$p")
+    done
+    ((${#parts[@]} > 0)) || { echo "ERROR: invalid key path '$key_path'" >&2; return 1; }
+
+    # local jq_path
+    # jq_path="$(printf '%s\n' "${parts[@]}" | jq -R . | jq -s -c .)" || {
+    #     echo "ERROR: building jq path" >&2
+    #     return 1
+    # }
+
+    local jq_path
+    jq_path="$(
+        printf '%s\n' "${parts[@]}" \
+        | jq -R 'if test("^[0-9]+$") then tonumber else . end' \
+        | jq -s -c .
+    )" || {
+        echo "ERROR: building jq path" >&2
+        return 1
+    }
+
+    printf "%s" "$jq_path"
+}
+
+
+# build an expression for jq
+# build_jq_expr_from_path <key_path>
+#
+# build_jq_expr_from_path ".a.b.c"
+#          .["a"]["b"]["c"]
+build_jq_expr_from_path() {
+    local key_path="$1"
+
+    [ -n "$key_path" ] || { echo "ERROR: key_path empty" >&2; return 1; }
+
+    local -a parts=() tmp=()
+    local p
+
+    IFS='.' read -r -a tmp <<< "${key_path#.}"
+    for p in "${tmp[@]}"; do
+        [ -n "$p" ] && parts+=("$p")
+    done
+    ((${#parts[@]} > 0)) || { echo "ERROR: invalid key path '$key_path'" >&2; return 1; }
+
+  
+    local jq_expr idx key json_key
+    jq_expr="."
+    for idx in "${!parts[@]}"; do
+        key="${parts[$idx]}"
+        json_key="$(printf '%s' "$key" | jq -R .)" || { echo "ERROR: escaping key" >&2; return 1; }
+        jq_expr+="[$json_key]"
+    done
+
+    printf "%s" "$jq_expr"
+}
+
+
+
+
+# format and fix invalid json (i.e: remove last comma at the end of a json object)
+# can be used in a stream :
+#       echo '{ "to" :"",}' | sanitize_json
+#       sanitize_json - < file.json 
+# or if a file is passed as argument 1, the file will be sanitize itself
+#       sanitize_json "file.json"
+# or if a string is passed as argument 1
+#       sanitize_json '{ "to" :"a",}'
+# json5 options
+#   -s : size of indentation
+#   -c : convert inplace without making output file https://github.com/json5/json5/blob/main/lib/cli.js#L87
+sanitize_json() {
+    arg="$1"
+
+    require "json5"
+    
+    if [ ! -t 0 ]; then
+        # parse stream
+        PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" json5 -s 2
+    else 
+        if [ -n "$arg" ] && [ "$arg" != "-" ]; then
+            if [ ! -f "$arg" ]; then
+                echo "$arg" | PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" json5 -s 2
+                return $?
+            fi
+
+            local tmp_file="$(mktemp)"
+
+            PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" json5 -s 2 "$arg" 2>/dev/null >"$tmp_file" 
+            if [ $? -ne 0 ]; then
+                echo "ERROR : failed to sanitize json from $arg"
+                rm -f "$tmp_file"
+                return 1
+            else
+                mv "$tmp_file" "$arg"
+                return 0
+            fi
+        fi
+    fi
+}
+
+
+# test json 
+# if invalid json sanitize it
+# then exit 1 if still invalid json
+test_and_fix_json_file() {
+    local file_to_test="$1"
+
+    if [ ! -f "$file_to_test" ]; then
+        echo "ERROR : file not found $file_to_test"
+        exit 1
+    fi
+
+    if ! jq -e . "$file_to_test" >/dev/null 2>&1; then
+        echo "WARN : invalid json file : $file_to_test"
+        echo "       try to sanitize it"
+        sanitize_json "$file_to_test"
+        if ! jq -e . "$file_to_test" >/dev/null 2>&1; then
+            echo "ERROR : invalid json file : $file_to_test"
+            exit 1
+        else
+            echo "       it should be a valid json file now"
+        fi
+    fi
+
+}
+
+
+# check if a path exists in jison input
+# cat input.json | json_has_path <path>
+# json_has_path <path> < input.json
+#
+# echo '{"a":{"b":{"c": "value","d":"value"}}}' | json_has_path ".a.b.d"
+#       true
+# echo '{"a":{"b":{"c": "value","d":"value"}}}' | json_has_path ".a.b.w"
+#       false
+json_has_path() {
+  local path="$1"
+  local jq_expr="$(build_jq_array_from_path "$path")" || return 1
+
+  jq -e --argjson path "$jq_expr" '
+    ($path | length) > 0
+    and (
+      if ($path | length) == 1 then
+        has($path[0])
+      else
+        getpath($path[0:-1]) | has($path[-1])
+      end
+    )
+  ' 1>/dev/null 2>&1
+  return $?
+}
+
+# set a key from json input
+# cat input.json | json_set_key <key_path> <value>
+# json_set_key <key_path> <value> < input.json
+# key_path : can contains index for array
+#
+# json_set_key "a.b.c" '"new_value"'
+# echo '{"a":{"b":{"c": "value","d":"value"}}}' | json_set_key "a.b.c" '"new_value"'
+# echo '{"a":{"b":{"array":[10,20,30,40,50]}}}' | json_set_key "a.b.array.3" '999'
+#          => '{"a":{"b":{"array":[10,20,30,999,50]}}}'
+json_set_key() {
+    local key_path="$1"
+    local value="$2"
+
+    if [ -z "$key_path" ]; then
+        echo "ERROR : json key path empty"
+        return 1
+    fi
+
+    if [ "$#" -lt 2 ]; then
+        echo "ERROR : argument missing"
+        return 1
+    fi
+
+    local jq_opt
+    if [ ! -t 0 ]; then
+        # parse stream from stdin
+        :
+    else
+        # no stdin, create new json
+        jq_opt="-n"
+    fi
+
+    local jq_path
+    jq_path="$(build_jq_array_from_path "$key_path")" || return 1
+
+    # value must be a valid JSON (ie: '"str"', '123', 'true', '{"x":1}', '["a"]', etc.)
+    if ! jq $jq_opt --argjson path "$jq_path" --argjson v "$value" \
+        'setpath($path; $v)'; then
+        echo "ERROR : generating json from key_path/value (value must be valid JSON)" >&2
+        return 1
+    fi
+}
+
+
+# set a json key into a file
+# json_set_key_into_file <key_path> <value> <file>
+#
+# json_set_key_into_file ".a.b.c" '"value"' "input.json"
+json_set_key_into_file() {
+    local key_path="$1"
+    local value="$2"
+    local target_file="$3"
+
+    if [ -z "$key_path" ]; then
+        echo "ERROR : json key path to set empty"
+        exit 1
+    fi
+    if [ "$#" -lt 3 ]; then
+        echo "ERROR : argument missing"
+        exit 1
+    fi
+    if [ ! -s "$target_file" ]; then
+        echo "Valid target file not found at $target_file. Creating it."
+        mkdir -p "$(dirname "$target_file")"
+        echo "{}" > "$target_file"
+    else
+        test_and_fix_json_file "$target_file"
+    fi
+
+    local tmp_file="$(mktemp)"
+    json_set_key "$key_path" "$value" < "$target_file" > "$tmp_file"
+
+    if [ $? -ne 0 ]; then
+        echo "ERROR : processing with jq"
+        rm -f "$tmp_file"
+        exit 1
+    else
+        mv "$tmp_file" "$target_file"
+        rm -f "$tmp_file"
+    fi
+    sanitize_json "$target_file"
+}
+
+
+# delete a key from json input
+# cat input.json | json_del_key <key_path>
+# json_del_key <key_path> < input.json
+#
+# echo '{"a":{"b":{"c": "value","d":"value"}}}' | json_del_key "a.b.c"
+json_del_key() {
+    local key_path="$1"
+    local jq_path
+    if [ ! -t 0 ]; then
+        jq_path="$(build_jq_array_from_path "$key_path")" || return 1
+        jq "delpaths([$jq_path])"
+    fi
+}
+
+# delete a json key from a file
+# json_del_key_from_file <key_path> <file>
+#
+# json_del_key_from_file ".a.b.c" "input.json"
+json_del_key_from_file() {
+    local key_path="$1"
+    local target_file="$2"
+
+    if [ -z "$key_path" ]; then
+        echo "ERROR : json key path to remove empty"
+        exit 1
+    fi
+    if [ ! -s "$target_file" ]; then
+        echo "WARN : file not found $target_file"
+        return
+    fi
+
+    test_and_fix_json_file "$target_file"
+
+    if ! json_has_path "$key_path" < "$target_file"; then
+        sanitize_json "$target_file"
+        # key not found
+        return 1
+    fi
+   
+    local tmp_file="$(mktemp)"
+    json_del_key "$key_path" < "$target_file" > "$tmp_file"
+
+    if [ $? -ne 0 ]; then
+        echo "ERROR : processing with jq"
+        rm -f "$tmp_file"
+        exit 1
+    else
+        mv "$tmp_file" "$target_file"
+        rm -f "$tmp_file"
+    fi
+
+    sanitize_json "$target_file"
+}
+
+
+
+# merge one jwon file (file_to_merge) into another (file_to_merge_into)
+# file_to_merge : have higher priority and erase file_to_merge_into content
+# file_to_merge also support environment variable injection ${VAR} (Replace ${VAR} with environnement variable if it exists)
+merge_json_file() {
+    local file_to_merge="$1"
+    local file_to_merge_into="$2"
+
+    if [ ! -f "$file_to_merge" ]; then
+        echo "ERROR : file to merge not found $file_to_merge"
+        exit 1
+    fi
+
+    test_and_fix_json_file "$file_to_merge"
+
+    if [ ! -s "$file_to_merge_into" ]; then
+        echo "Valid target file not found at $file_to_merge_into. Creating it."
+        mkdir -p "$(dirname "$file_to_merge_into")"
+        echo "{}" > "$file_to_merge_into"
+    fi
+
+    test_and_fix_json_file "$file_to_merge_into"
+
+    local tmp_merge="$(mktemp)"
+    # Replace ${VAR} with environnement variable if it exists or keep ${VAR} as is.
+    # if VAR exists but empty, ${VAR} is replaced with an empty string.
+    # do NOT replace $VAR, only ${VAR}
+    if ! jq \
+            'def expand_env:
+                walk(
+                    if type=="string" then
+                        gsub("\\$\\{(?<k>[A-Za-z_][A-Za-z0-9_]*)\\}"; (env[.k] // ("${"+.k+"}")))
+                    else 
+                        . 
+                    end
+                    );
+            expand_env
+    ' "$file_to_merge" > "$tmp_merge"; then
+        echo "ERROR : expanding environment variables in $file_to_merge" >&2
+        exit 1
+    fi
+
+    test_and_fix_json_file "$tmp_merge"
+
+    local tmp_file="$(mktemp)"
+    # Merge the two json files
+    jq -s '.[0] * .[1]' "${file_to_merge_into}" "$tmp_merge" > "$tmp_file"
+    
+    if [ $? -ne 0 ]; then
+        rm -f "$tmp_file" "$tmp_merge"
+        exit 1
+    else
+        mv "$tmp_file" "$file_to_merge_into"
+        rm -f "$tmp_file" "$tmp_merge"
+    fi
+}
