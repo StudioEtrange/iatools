@@ -50,7 +50,7 @@ gemini_merge_config() {
 
 gemini_remove_config() {
     key_path="$1"
-    json_remove_key "$key_path" "$IATOOLS_GEMINI_CONFIG_FILE"
+    json_del_key_from_file "$key_path" "$IATOOLS_GEMINI_CONFIG_FILE"
 }
 
 gemini_add_command() {
