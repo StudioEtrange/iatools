@@ -125,6 +125,10 @@ IATools simplifies connecting to MCP (Model Context Protocol) servers, allowing 
 * **Data Commons**: Tools and agents for interacting with the Data Commons Knowledge Graph using the Model Context Protocol (MCP). ([Source](https://github.com/datacommonsorg/agent-toolkit))
 
 
+### VS Code
+
+See [VS Code](doc/vscode.md) 
+
 ## Design Notes 
 
 ### Notes on underlying Framework: Stella
