@@ -20,7 +20,7 @@ vscode_path() {
 }
 
 vscode_settings_configure() {
-    target="$1"
+    local target="$1"
 
     case "$target" in
         "gemini" )
@@ -123,7 +123,7 @@ vscode_settings_configure() {
 }
 
 vscode_settings_remove() {
-    target="$1"
+    local target="$1"
 
     case "$target" in
         "gemini" )
@@ -137,24 +137,24 @@ vscode_settings_remove() {
 
 # generic config management -----------------
 vscode_merge_config() {
-    file_to_merge="$1"
+    local file_to_merge="$1"
     merge_json_file "$file_to_merge" "$IATOOLS_VSCODE_CONFIG_FILE"
 }
 
 vscode_remove_config() {
-    key_path="$1"
+    local key_path="$1"
     json_del_key_from_file "$key_path" "$IATOOLS_VSCODE_CONFIG_FILE"
 }
 
 vscode_set_config() {
-    key_path="$1"
-    value="$2"
+    local key_path="$1"
+    local value="$2"
     json_set_key_into_file "$key_path" "$value" "$IATOOLS_VSCODE_CONFIG_FILE"   
 }
 
 # http proxy management ------------------------
 vscode_settings_set_http_proxy() {
-    http_proxy="$1"
+    local http_proxy="$1"
     vscode_set_config "http\.proxy" "\"$http_proxy\""
 }
 
@@ -167,138 +167,60 @@ vscode_settings_remove_http_proxy() {
 
 # path management ------------------------
 vscode_settings_add_path() {
-    path_expression_to_add="$1"
+    local path_to_add="$1"
     # ALWAYS_PREPEND add path or move it at the beginning position
     # ALWAYS_POSTPEND add path or move it at the end position
     # PREPEND_IF_NOT_EXISTS add path at the beginning position only if not already present
     # POSTPEND_IF_NOT_EXISTS add path at the end position only if not already present
-    mode="${2:-ALWAYS_PREPEND}" 
-    vscode_settings_set_path "$IATOOLS_VSCODE_CONFIG_FILE" "$path_expression_to_add" "$mode"
+    local mode="${2:-ALWAYS_PREPEND}" 
+    vscode_settings_tweak_path "$path_to_add" "$mode"
 }
 
 vscode_settings_remove_path() {
-    path_expression_to_remove="$1"
+    local path_to_remove="$1"
     # REMOVE remove all occurences of a fix expression
     # REMOVE_REGEXP remove all occurences of an regexp expression
-    mode="${2:-REMOVE}"
-    vscode_settings_set_path "$IATOOLS_VSCODE_CONFIG_FILE" "$path_expression_to_remove" "$mode"
+    local mode="${2:-REMOVE}"
+    vscode_settings_tweak_path "$path_to_remove" "$mode"
 }
 
-
-vscode_settings_set_path() {
-    vscode_settings_file="$1"
-    path_expression="$2"
-    # ALWAYS_PREPEND add path or move it at the begining position
+vscode_settings_tweak_path() {
+    local path="$1"
+    # ALWAYS_PREPEND add path or move it at the beginning position
     # ALWAYS_POSTPEND add path or move it at the end position
-    # PREPEND_IF_NOT_EXISTS add path at the begining position only if not already present
+    # PREPEND_IF_NOT_EXISTS add path at the beginning position only if not already present
     # POSTPEND_IF_NOT_EXISTS add path at the end position only if not already present
-    # REMOVE remove all occurences of a fix expression
-    # REMOVE_REGEXP remove all occurences of an regexp expression
-    mode="${3:-ALWAYS_PREPEND}"
+    local mode="${2:-ALWAYS_PREPEND}" 
 
-    if [ ! -s "$vscode_settings_file" ]; then
-        echo "Valid target file not found at $vscode_settings_file. Creating it."
-        mkdir -p "$(dirname "$vscode_settings_file")"
-        echo "{}" > "$vscode_settings_file"
-    fi
+    local tmp_file="$(mktemp)"
 
-    tmp_file=$(mktemp)
-
-    jq --arg set_path "$path_expression" --arg mode "$mode" '
-
-    # replace ":" inside ${...} with \u0001
-    # case of ${env:FOO}
-    def shield:
-        if (type=="string") then
-            gsub("\\$\\{env:(?<var>[^}]+)\\}"; "${env\u0001" + .var + "}")
-        else
-            .
-        end;
-
-    # restore ":"
-    def unshield:
-        if (type=="string") then gsub("\u0001"; ":") else . end;
-
-    # split by ":" but keep ${...} together
-    def split_keep_vars:
-        if (type!="string") or (.=="") then 
-            [] 
-        else 
-            ( . | shield | split(":") | map(unshield) )
-        end;
-
-    
-    def process:
-        if ($mode | startswith("REMOVE") | not) then
-            if . == null or . == "" then
-                $set_path
-            else
-                if $mode == "ALWAYS_PREPEND" then
-                    ( split_keep_vars
-                        | map(select(. != "" and . != $set_path))
-                        | [$set_path] + .
-                        | join(":")
-                    )
-                elif $mode == "ALWAYS_POSTPEND" then
-                    ( split_keep_vars
-                        | map(select(. != "" and . != $set_path))
-                        | . + [$set_path]
-                        | join(":")
-                    )
-                 elif $mode == "PREPEND_IF_NOT_EXISTS" then
-                    (split_keep_vars) as $parts |
-                    if ($parts | index($set_path)) then 
-                        . 
-                    else 
-                        ( [$set_path] + $parts | join(":") ) 
-                    end
-                elif $mode == "POSTPEND_IF_NOT_EXISTS" then
-                    (split_keep_vars) as $parts |
-                    if ($parts | index($set_path)) then 
-                        . 
-                    else 
-                        ($parts + [$set_path] | join(":")) 
-                    end
+    cat "$IATOOLS_VSCODE_CONFIG_FILE" \
+        | jq '
+            # replace ":" inside ${...} with \u0001
+            # case of ${env:FOO}
+            def shield:
+                if (type=="string") then
+                    gsub("\\$\\{env:(?<var>[^}]+)\\}"; "${env\u0001" + .var + "}")
                 else
                     .
-                end
-            end
+                end;
+            walk(shield)' \
+        | json_tweak_value_of_list '.terminal\.integrated\.env\.linux.PATH' "$path" ':' "$mode" \
+        | json_tweak_value_of_list '.terminal\.integrated\.env\.osx.PATH' "$path" ':' "$mode" \
+        | jq '
+            # restore ":"
+            def unshield:
+                if (type=="string") then gsub("\u0001"; ":") else . end;
+            walk(unshield)' > "$tmp_file"
+        
+        if [ $? -ne 0 ]; then
+            echo "ERROR : vscode_settings_tweak_path processing with jq"
+            rm -f "$tmp_file"
+            exit 1
         else
-            if . == null or . == "" then
-                .
-            else
-                if $mode == "REMOVE" then
-                    ( split_keep_vars
-                        | map(select(. != "" and . != $set_path))
-                        | join(":")
-                    )
-                elif $mode == "REMOVE_REGEXP" then
-                    ( split_keep_vars
-                        | map(select(. != "" and (. | test($set_path) | not)))
-                        | join(":")
-                    )
-                else
-                    .
-                end
-            end
-        end;
-
-    # linux
-    .["terminal.integrated.env.linux"] = (.["terminal.integrated.env.linux"] // {}) |
-    .["terminal.integrated.env.linux"].PATH |= process
-    |
-    # osx
-    .["terminal.integrated.env.osx"] = (.["terminal.integrated.env.osx"] // {}) |
-    .["terminal.integrated.env.osx"].PATH |= process
-
-    ' "$vscode_settings_file" > "$tmp_file"
-    if [ $? -ne 0 ]; then
-        echo "ERROR : processing with jq"
-        rm -f "$tmp_file"
-        exit 1
-    else
-        mv "$tmp_file" "$vscode_settings_file"
-    fi
+            mv "$tmp_file" "$IATOOLS_VSCODE_CONFIG_FILE"
+            rm -f "$tmp_file"
+        fi
 }
 
 # install an alternative sysroot with glibc 2.28

@@ -456,9 +456,6 @@ EOF
 
 
 
-
-
-
 @test "json_set_key_into_file1" {
 
 	tmp="$(mktemp)"
@@ -495,3 +492,56 @@ EOF
 
 
 
+@test "json_tweak_value_of_list1" {
+
+  run json_tweak_value_of_list ".PATH" "AA" ":" "ALWAYS_PREPEND" <<'EOF'
+{"PATH":"BB:CC"}
+EOF
+  expected=$(cat <<'EOF'
+{
+  "PATH": "AA:BB:CC"
+}
+EOF
+  )
+
+	assert_output "$expected"
+
+
+
+  run json_tweak_value_of_list ".PATH" "AA" ":" "ALWAYS_PREPEND" <<'EOF'
+{"PATH":"BB:CC:AA"}
+EOF
+  expected=$(cat <<'EOF'
+{
+  "PATH": "AA:BB:CC"
+}
+EOF
+  )
+
+	assert_output "$expected"
+
+
+    run json_tweak_value_of_list ".PATH" "BB" ":" "POSTPEND_IF_NOT_EXISTS" <<'EOF'
+{"PATH":"BB:CC:AA"}
+EOF
+  expected=$(cat <<'EOF'
+{
+  "PATH": "BB:CC:AA"
+}
+EOF
+  )
+
+	assert_output "$expected"
+
+
+  run json_tweak_value_of_list ".PATH" "BB" ":" "POSTPEND_IF_NOT_EXISTS"
+  expected=$(cat <<'EOF'
+{
+  "PATH": "BB"
+}
+EOF
+  )
+
+	assert_output "$expected"
+
+}

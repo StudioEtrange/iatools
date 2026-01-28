@@ -51,7 +51,7 @@ Options:
     oc mcp github install|uninstall             Add mcp-github remote server configuration.
     oc mcp context7 install|uninstall           Add mcp-context7 local server configuration.
     ----
-    vs set <key> <value>                Set a VSCode configuration in settings file.
+    vs set <key> <value>                Set a VS Code configuration in settings file.
     vs show-config                      Show current VSCode configuration.
     ----
     npm-config set <key> <value>    Set a npm configuration for the internal nodejs.

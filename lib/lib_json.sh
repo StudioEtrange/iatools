@@ -239,13 +239,13 @@ json_set_key() {
     local key_path="$1"
     local value="$2"
 
-    if [ -z "$key_path" ]; then
-        echo "ERROR : json key path empty"
+    if [ "$#" -lt 2 ]; then
+        echo "ERROR : argument missing"
         exit 1
     fi
 
-    if [ "$#" -lt 2 ]; then
-        echo "ERROR : argument missing"
+    if [ -z "$key_path" ]; then
+        echo "ERROR : json key path empty"
         exit 1
     fi
 
@@ -279,12 +279,12 @@ json_set_key_into_file() {
     local value="$2"
     local target_file="$3"
 
-    if [ -z "$key_path" ]; then
-        echo "ERROR : json key path to set empty"
-        exit 1
-    fi
     if [ "$#" -lt 3 ]; then
         echo "ERROR : argument missing"
+        exit 1
+    fi
+    if [ -z "$key_path" ]; then
+        echo "ERROR : json key path to set empty"
         exit 1
     fi
     if [ ! -s "$target_file" ]; then
@@ -421,3 +421,154 @@ merge_json_file() {
         rm -f "$tmp_file" "$tmp_merge"
     fi
 }
+
+json_tweak_value_of_list_into_file() {
+    local key_path="$1"
+    local value="$2"
+    local separator="$3"
+    local target_file="$4"
+    local mode="${5:-ALWAYS_PREPEND}"
+
+    if [ "$#" -lt 4 ]; then
+        echo "ERROR : argument missing"
+        exit 1
+    fi
+    if [ -z "$key_path" ]; then
+        echo "ERROR : json key path to set empty"
+        exit 1
+    fi
+    if [ ! -s "$target_file" ]; then
+        echo "Valid target file not found at $target_file. Creating it."
+        mkdir -p "$(dirname "$target_file")"
+        echo "{}" > "$target_file"
+    else
+        test_and_fix_json_file "$target_file"
+    fi
+
+    local tmp_file="$(mktemp)"
+    json_tweak_value_of_list "$key_path" "$value" "$separator" "$mode" < "$target_file" > "$tmp_file"
+    if [ $? -ne 0 ]; then
+        echo "ERROR : processing with jq"
+        rm -f "$tmp_file"
+        exit 1
+    else
+        mv "$tmp_file" "$target_file"
+        rm -f "$tmp_file"
+    fi
+    sanitize_json "$target_file"
+}
+
+json_tweak_value_of_list() {
+    local key_path="$1"
+    local value="$2"
+    local separator="$3" # separator of values in the list
+    local mode="${4:-ALWAYS_PREPEND}"
+    # ALWAYS_PREPEND add path or move it at the begining position
+    # ALWAYS_POSTPEND add path or move it at the end position
+    # PREPEND_IF_NOT_EXISTS add path at the begining position only if not already present
+    # POSTPEND_IF_NOT_EXISTS add path at the end position only if not already present
+    # REMOVE remove all occurences of a fix expression
+    # REMOVE_REGEXP remove all occurences of an regexp expression
+
+    if [ "$#" -lt 3 ]; then
+        echo "ERROR : argument missing"
+        exit 1
+    fi
+
+    if [ -z "$key_path" ]; then
+        echo "ERROR : json key path empty"
+        exit 1
+    fi
+
+    if [ -z "$separator" ]; then
+        echo "ERROR : value separator is empty"
+        exit 1
+    fi
+    
+    local jq_opt
+    if [ ! -t 0 ]; then
+        # parse stream from stdin
+        :
+    else
+        # no stdin, create new json
+        jq_opt="-n"
+    fi
+
+    local jq_path
+    jq_path="$(build_jq_array_from_path "$key_path")" || return 1
+
+    if ! jq $jq_opt --arg separator "$separator" --arg value "$value" --arg mode "$mode" --argjson key_path "$jq_path" '
+    
+        # split by "$separator"
+        def split_by_separator:
+            if (type!="string") or (.=="") then 
+                []
+            else 
+                ( . | split($separator) )
+            end;
+        
+        def process:
+            if ($mode | startswith("REMOVE") | not) then
+                if . == null or . == "" then
+                    $value
+                else
+                    if $mode == "ALWAYS_PREPEND" then
+                        ( split_by_separator
+                            | map(select(. != "" and . != $value))
+                            | [$value] + .
+                            | join($separator)
+                        )
+                    elif $mode == "ALWAYS_POSTPEND" then
+                        ( split_by_separator
+                            | map(select(. != "" and . != $value))
+                            | . + [$value]
+                            | join($separator)
+                        )
+                    elif $mode == "PREPEND_IF_NOT_EXISTS" then
+                        (split_by_separator) as $parts |
+                        if ($parts | index($value)) then 
+                            . 
+                        else 
+                            ( [$value] + $parts | join($separator) ) 
+                        end
+                    elif $mode == "POSTPEND_IF_NOT_EXISTS" then
+                        (split_by_separator) as $parts |
+                        if ($parts | index($value)) then 
+                            . 
+                        else 
+                            ($parts + [$value] | join($separator)) 
+                        end
+                    else
+                        .
+                    end
+                end
+            else
+                if . == null or . == "" then
+                    .
+                else
+                    if $mode == "REMOVE" then
+                        ( split_by_separator
+                            | map(select(. != "" and . != $value))
+                            | join($separator)
+                        )
+                    elif $mode == "REMOVE_REGEXP" then
+                        ( split_by_separator
+                            | map(select(. != "" and (. | test($value) | not)))
+                            | join($separator)
+                        )
+                    else
+                        .
+                    end
+                end
+            end;
+
+        # update target path
+        . as $doc
+        | (getpath($key_path)) as $cur
+        | setpath($key_path; ($cur | process))
+        '; then
+        echo "ERROR json_tweak_value_of_list"
+        return 1
+    fi
+}
+
