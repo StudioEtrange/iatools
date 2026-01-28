@@ -20,8 +20,17 @@ teardown() {
 	run build_jq_expr_from_path "a.b.c"
 	assert_output '.["a"]["b"]["c"]'
 
+  run build_jq_expr_from_path a.0.b
+  assert_output '.["a"][0]["b"]'
+
 	run build_jq_expr_from_path .mcpServers.destkop-commander
 	assert_output '.["mcpServers"]["destkop-commander"]'
+
+  run build_jq_expr_from_path 'http\.proxy'
+	assert_output '.["http.proxy"]'
+
+  run build_jq_expr_from_path 'a.0.http\.proxy'
+  assert_output '.["a"][0]["http.proxy"]'
 
 }
 
@@ -36,6 +45,25 @@ teardown() {
 
 	run build_jq_array_from_path a-romeo.b.c
 	assert_output '["a-romeo","b","c"]'
+
+  run build_jq_array_from_path ".a.0.c"
+	assert_output '["a",0,"c"]'
+
+  run build_jq_array_from_path 'http\.proxy'
+	assert_output '["http.proxy"]'
+
+  run build_jq_array_from_path "http\.proxy"
+	assert_output '["http.proxy"]'
+
+  run build_jq_array_from_path 'a.http\.proxy'
+	assert_output '["a","http.proxy"]'
+
+  run build_jq_array_from_path 'a.http\Xproxy'
+  # NOTE : in json \X is encoded as \\X
+	assert_output '["a","http\\Xproxy"]'
+
+  run build_jq_array_from_path 'a.http\\proxy'
+	assert_output '["a","http\\proxy"]'
 
 }
 
