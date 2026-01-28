@@ -146,11 +146,16 @@ vscode_remove_config() {
     json_del_key_from_file "$key_path" "$IATOOLS_VSCODE_CONFIG_FILE"
 }
 
+vscode_set_config() {
+    key_path="$1"
+    value="$2"
+    json_set_key_into_file "$key_path" "$value" "$IATOOLS_VSCODE_CONFIG_FILE"   
+}
 
 # http proxy management ------------------------
 vscode_settings_set_http_proxy() {
-    # TODO
     http_proxy="$1"
+    vscode_set_config "http\.proxy" "\"$http_proxy\""
 }
 
 
@@ -183,9 +188,9 @@ vscode_settings_remove_path() {
 vscode_settings_set_path() {
     vscode_settings_file="$1"
     path_expression="$2"
-    # ALWAYS_PREPEND add path or move it at the beginning position
+    # ALWAYS_PREPEND add path or move it at the begining position
     # ALWAYS_POSTPEND add path or move it at the end position
-    # PREPEND_IF_NOT_EXISTS add path at the beginning position only if not already present
+    # PREPEND_IF_NOT_EXISTS add path at the begining position only if not already present
     # POSTPEND_IF_NOT_EXISTS add path at the end position only if not already present
     # REMOVE remove all occurences of a fix expression
     # REMOVE_REGEXP remove all occurences of an regexp expression
@@ -202,6 +207,7 @@ vscode_settings_set_path() {
     jq --arg set_path "$path_expression" --arg mode "$mode" '
 
     # replace ":" inside ${...} with \u0001
+    # case of ${env:FOO}
     def shield:
         if (type=="string") then
             gsub("\\$\\{env:(?<var>[^}]+)\\}"; "${env\u0001" + .var + "}")

@@ -9,37 +9,61 @@
 #          ["a","b","c"]
 build_jq_array_from_path() {
     local key_path="$1"
-
     [ -n "$key_path" ] || { echo "ERROR: key_path empty" >&2; return 1; }
 
-    local -a parts=() tmp=()
-    local p
+    # remove any starting "."
+    key_path="${key_path#.}"
+    [ -n "$key_path" ] || { echo "ERROR: invalid key path '$1'" >&2; return 1; }
 
-    IFS='.' read -r -a tmp <<< "${key_path#.}"
-    for p in "${tmp[@]}"; do
-        [ -n "$p" ] && parts+=("$p")
+    local -a parts=()
+    local buf="" c="" esc=0
+    local i=0 len=${#key_path}
+
+    while [ "$i" -lt "$len" ]; do
+        c="${key_path:$i:1}"
+
+        if [ "$esc" -eq 1 ]; then
+            # only two special escapes:
+            #   \.  => .
+            #   \\  => \
+            # otherwise keep the backslash: \x => \x
+            case "$c" in
+                "." ) buf="${buf}." ;;
+                "\\" ) buf="${buf}\\" ;;
+                *   ) buf="${buf}\\${c}" ;;
+            esac
+            esc=0
+        else
+            case "$c" in
+                "\\") esc=1 ;;
+                ".")
+                    [ -n "$buf" ] && parts+=("$buf")
+                    buf=""
+                    ;;
+                *) buf="${buf}${c}" ;;
+            esac
+        fi
+
+        i=$((i+1))
     done
-    ((${#parts[@]} > 0)) || { echo "ERROR: invalid key path '$key_path'" >&2; return 1; }
 
-    # local jq_path
-    # jq_path="$(printf '%s\n' "${parts[@]}" | jq -R . | jq -s -c .)" || {
-    #     echo "ERROR: building jq path" >&2
-    #     return 1
-    # }
+    # trailing "\" kept as literal "\"
+    if [ "$esc" -eq 1 ]; then
+        buf="${buf}\\"
+    fi
+
+    [ -n "$buf" ] && parts+=("$buf")
+    ((${#parts[@]} > 0)) || { echo "ERROR: invalid key path '$key_path'" >&2; return 1; }
 
     local jq_path
     jq_path="$(
         printf '%s\n' "${parts[@]}" \
         | jq -R 'if test("^[0-9]+$") then tonumber else . end' \
         | jq -s -c .
-    )" || {
-        echo "ERROR: building jq path" >&2
-        return 1
-    }
+    )" || { echo "ERROR: building jq path" >&2; return 1; }
 
     printf "%s" "$jq_path"
 }
-
 
 # build an expression for jq
 # build_jq_expr_from_path <key_path>
@@ -48,31 +72,65 @@ build_jq_array_from_path() {
 #          .["a"]["b"]["c"]
 build_jq_expr_from_path() {
     local key_path="$1"
-
     [ -n "$key_path" ] || { echo "ERROR: key_path empty" >&2; return 1; }
 
-    local -a parts=() tmp=()
-    local p
+    # remove any starting "."
+    key_path="${key_path#.}"
+    [ -n "$key_path" ] || { echo "ERROR: invalid key path '$1'" >&2; return 1; }
 
-    IFS='.' read -r -a tmp <<< "${key_path#.}"
-    for p in "${tmp[@]}"; do
-        [ -n "$p" ] && parts+=("$p")
+    # split with escapes: \. and \\ supported
+    local -a parts=()
+    local buf="" c="" esc=0
+    local i=0 len=${#key_path}
+
+    while [ "$i" -lt "$len" ]; do
+        c="${key_path:$i:1}"
+
+        if [ "$esc" -eq 1 ]; then
+            case "$c" in
+                ".")  buf="${buf}." ;;
+                "\\") buf="${buf}\\" ;;
+                *)    buf="${buf}\\${c}" ;;
+            esac
+            esc=0
+        else
+            case "$c" in
+                "\\") esc=1 ;;
+                ".")
+                    [ -n "$buf" ] && parts+=("$buf")
+                    buf=""
+                    ;;
+                *) buf="${buf}${c}" ;;
+            esac
+        fi
+
+        i=$((i+1))
     done
+
+    # trailing "\" kept literally
+    if [ "$esc" -eq 1 ]; then
+        buf="${buf}\\"
+    fi
+
+    [ -n "$buf" ] && parts+=("$buf")
     ((${#parts[@]} > 0)) || { echo "ERROR: invalid key path '$key_path'" >&2; return 1; }
 
-  
-    local jq_expr idx key json_key
-    jq_expr="."
-    for idx in "${!parts[@]}"; do
-        key="${parts[$idx]}"
-        json_key="$(printf '%s' "$key" | jq -R .)" || { echo "ERROR: escaping key" >&2; return 1; }
-        jq_expr+="[$json_key]"
+    local jq_expr="."
+    local key json_key
+    for key in "${parts[@]}"; do
+        case "$key" in
+            (*[!0-9]*|'')  # non numérique
+                json_key="$(printf '%s' "$key" | jq -R .)" || { echo "ERROR: escaping key" >&2; return 1; }
+                jq_expr+="[$json_key]"
+                ;;
+            (*)            # numérique
+                jq_expr+="[$key]"
+                ;;
+        esac
     done
 
     printf "%s" "$jq_expr"
 }
-
-
 
 
 # format and fix invalid json (i.e: remove last comma at the end of a json object)
@@ -183,12 +241,12 @@ json_set_key() {
 
     if [ -z "$key_path" ]; then
         echo "ERROR : json key path empty"
-        return 1
+        exit 1
     fi
 
     if [ "$#" -lt 2 ]; then
         echo "ERROR : argument missing"
-        return 1
+        exit 1
     fi
 
     local jq_opt
