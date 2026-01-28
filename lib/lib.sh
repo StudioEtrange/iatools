@@ -50,7 +50,7 @@ iatools_install_dependencies() {
     echo "- Install other dependencies (for mcp servers and other commands) in an isolated way. (None of those will never been added to any PATH)"
     for f in $STELLA_APP_FEATURE_LIST; do
         case "$f" in
-            jq*);;
+            jq*|patchelf*);;
             nodejs)
                 if [ "$STELLA_CURRENT_PLATFORM" = "linux" ]; then
                     if [ "$STELLA_CURRENT_CPU_FAMILY" = "intel" ]; then

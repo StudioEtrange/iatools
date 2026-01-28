@@ -294,3 +294,26 @@ vscode_settings_set_path() {
         mv "$tmp_file" "$vscode_settings_file"
     fi
 }
+
+# install an alternative sysroot with glibc 2.28
+vscode_server_install_sysroot_228() {
+
+    echo "install requirement : patchelf"
+    $STELLA_API get_feature "patchelf"
+
+    echo "...downloading a linux sysroot with glibc 2.28..."
+    local sysroot_url="https://github.com/microsoft/vscode-linux-build-agent/releases/download/v20260127-398091/x86_64-linux-gnu-glibc-2.28-gcc-10.5.0.tar.gz"
+    $STELLA_API get_resource "sysroot" "$sysroot_url" "HTTP_ZIP" "$STELLA_APP_WORK_ROOT/sysroot228" "DEST_ERASE STRIP"
+
+}
+
+vscode_server_settings_for_sysroot_228() {
+    # path to the dynamic linker (ld-linux.so) in the sysroot (used for --set-interpreter option with patchelf)
+    export VSCODE_SERVER_CUSTOM_GLIBC_LINKER="$STELLA_APP_WORK_ROOT/sysroot228/x86_64-linux-gnu/sysroot/lib/ld-linux-x86-64.so.2"
+    # path to the library locations in the sysroot (used as --set-rpath option with patchelf)
+    export VSCODE_SERVER_CUSTOM_GLIBC_PATH=="$STELLA_APP_WORK_ROOT/sysroot228/x86_64-linux-gnu/sysroot/lib"
+    
+    # path to the patchelf binary on the remote host
+    $STELLA_API feature_info "patchelf" "PATCHELF"
+    export VSCODE_SERVER_PATCHELF_PATH="$PATCHELF_FEAT_INSTALL_ROOT/bin/patchelf"
+}
