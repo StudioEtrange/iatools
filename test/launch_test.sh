@@ -15,6 +15,8 @@ function init_iatools_test_env() {
 	# load iatools libraries
 	. "$STELLA_APP_ROOT/../lib/lib.sh"
 	. "$STELLA_APP_ROOT/../lib/lib_json.sh"
+	. "$STELLA_APP_ROOT/../lib/lib_yaml.sh"
+	. "$STELLA_APP_ROOT/../lib/lib_cpa.sh"
 	. "$STELLA_APP_ROOT/../lib/lib_vscode.sh"
 	. "$STELLA_APP_ROOT/../lib/lib_gemini.sh"
 	. "$STELLA_APP_ROOT/../lib/lib_opencode.sh"
@@ -48,13 +50,14 @@ function test_launch_bats() {
 STELLA_LOG_STATE=ON
 case $1 in
   h|help|--help|-h)
-    echo " * Usage $0 common|all [test-name]"
+    echo " * Usage $0 common_json|common_yaml|all [test-name]"
 	echo "sample:"
 	echo "$0 common test1"
     ;;
   all|"" )
 	init_iatools_test_env
-    test_launch_bats common $2
+    test_launch_bats common_json $2
+	test_launch_bats common_yaml $2
     ;;
   * )
 	init_iatools_test_env

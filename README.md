@@ -1,6 +1,6 @@
 # IATools
 
-IATools is a command-line application designed to streamline the installation and management of AI development tools, including `gemini-cli`, `opencode` and various MCP servers.
+IATools is an experimental swiss-knife command-line application designed to streamline the installation and management of AI development tools, including `gemini-cli`, `opencode` and various MCP servers. The main goal is to provide a convenient way to install and configure AI tools, ensuring minimal system, to test or use them.
 
 ## Key Features of IATools
 
@@ -101,6 +101,14 @@ An open-source AI agent that brings the power of Gemini directly into your termi
 * Gemini CLI supports MCP Prompts as slash commands
 * `/chat save` - saved chat history are in $HOME/.gemini/tmp
 * gemini 2.5 pro is only free of charge when using google auth inside gemini-cli. If you set a gemini key, by using GEMINI_API_KEY, it will not be free (even if you previously with google auth)
+* gemmini-cli Bridge API
+  * 821 stars Expose Gemini CLI endpoints as OpenAI API (mainly on Cloudflare Workers) : https://github.com/GewoonJaap/gemini-cli-openai 
+  * 20 stars - Use Gemini CodeAssist (Gemini CLI) through the OpenAI/Anthropic API : https://github.com/ubaltaci/gemini-cli-proxy
+  * 48 stars - Gemini CLI wrapper to serve Gemini models through an OpenAI-compatible API : https://github.com/Brioch/gemini-openai-proxy
+  * 127 stars - Wrap Gemini CLI as an OpenAI-compatible API service https://github.com/nettee/gemini-cli-proxy
+  * 128 stars - Exposes all built-in tools from gemini-cli through a unified MCP endpoint and OpenAI-Compatible API Bridge https://github.com/Intelligent-Internet/gemini-cli-mcp-openai-bridge
+  * 8900 stars - Wrap Gemini CLI, Antigravity, ChatGPT Codex, Claude Code, Qwen Code, iFlow as an OpenAI/Gemini/Claude/Codex compatible API service - https://github.com/router-for-me/CLIProxyAPI - https://github.com/brokechubb/cliproxyapi-installer
+  * 106 stars - Experimental gemini-cli as MCP server : https://github.com/levindixon/gemini-cli-mcp-server
 
 ### Opencode CLI
 
@@ -124,6 +132,24 @@ IATools simplifies connecting to MCP (Model Context Protocol) servers, allowing 
 * **GitHub**: Official server for interacting with GitHub issues, PRs, and repositories. ([Source](https://github.com/github/github-mcp-server))
 * **Data Commons**: Tools and agents for interacting with the Data Commons Knowledge Graph using the Model Context Protocol (MCP). ([Source](https://github.com/datacommonsorg/agent-toolkit))
 
+
+### CLIProxyAPI
+
+CLIProxyAPI is a tool that bridges the gap between command-line interfaces and AI models, enabling seamless integration and interaction.
+
+* https://help.router-for.me/
+* https://github.com/router-for-me/CLIProxyAPI
+* https://github.com/router-for-me/CLIProxyAPIPlus
+* Installer project : https://github.com/brokechubb/cliproxyapi-installer
+
+* login to gemini cli:
+  * ./cli-proxy-api --login [--no-browser] [--project_id <your_project_id>]
+  * ./iatools cpa launch --  --login --no-browser
+    * NOTE : on vscode connected with remote SSH Forward port 8085 to your local machine
+  * list available models
+    * curl -X GET "http://localhost:8318/v1/models" \
+      -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+      -H "Content-Type: application/json"
 
 ### VS Code
 

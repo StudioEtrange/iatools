@@ -276,13 +276,13 @@ json_set_key() {
 
 
 # set a json key into a file
-# json_set_key_into_file <key_path> <value> <file>
+# json_set_key_into_file <file> <key_path> <value>
 #
-# json_set_key_into_file ".a.b.c" '"value"' "input.json"
+# json_set_key_into_file "input.json" ".a.b.c" '"value"'
 json_set_key_into_file() {
-    local key_path="$1"
-    local value="$2"
-    local target_file="$3"
+    local target_file="$1"
+    local key_path="$2"
+    local value="$3"
 
     if [ "$#" -lt 3 ]; then
         echo "ERROR : argument missing"
@@ -302,11 +302,12 @@ json_set_key_into_file() {
 
     local tmp_file="$(mktemp)"
     json_set_key "$key_path" "$value" < "$target_file" > "$tmp_file"
+    local ret=$?
 
-    if [ $? -ne 0 ]; then
+    if [ $ret -ne 0 ]; then
         echo "ERROR : processing with jq"
         rm -f "$tmp_file"
-        exit 1
+        return $ret
     else
         mv "$tmp_file" "$target_file"
         rm -f "$tmp_file"
@@ -330,12 +331,13 @@ json_del_key() {
 }
 
 # delete a json key from a file
-# json_del_key_from_file <key_path> <file>
+# json_del_key_from_file <file> <key_path>
 #
-# json_del_key_from_file ".a.b.c" "input.json"
+# json_del_key_from_file "input.json" ".a.b.c"
 json_del_key_from_file() {
-    local key_path="$1"
-    local target_file="$2"
+    local target_file="$1"
+    local key_path="$2"
+
 
     if [ -z "$key_path" ]; then
         echo "ERROR : json key path to remove empty"

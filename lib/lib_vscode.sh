@@ -161,13 +161,13 @@ vscode_merge_config() {
 
 vscode_remove_config() {
     local key_path="$1"
-    json_del_key_from_file "$key_path" "$IATOOLS_VSCODE_CONFIG_FILE"
+    json_del_key_from_file "$IATOOLS_VSCODE_CONFIG_FILE" "$key_path"
 }
 
 vscode_set_config() {
     local key_path="$1"
     local value="$2"
-    json_set_key_into_file "$key_path" "$value" "$IATOOLS_VSCODE_CONFIG_FILE"
+    json_set_key_into_file "$IATOOLS_VSCODE_CONFIG_FILE" "$key_path" "$value"
 }
 
 # http proxy management ------------------------

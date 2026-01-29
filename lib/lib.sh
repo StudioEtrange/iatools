@@ -16,6 +16,7 @@ iatools_path() {
     gemini_path
     opencode_path
     vscode_path
+    cpa_path
 }
 
 
@@ -48,11 +49,12 @@ iatools_install_dependencies() {
 
     echo "- Install internal dependencies for iatools (which will be added to iatools PATH while running)"
     $STELLA_API get_feature "jq"
+    $STELLA_API get_feature "yq"
 
     echo "- Install other dependencies (for mcp servers and other commands) in an isolated way. (None of those will never been added to any PATH)"
     for f in $STELLA_APP_FEATURE_LIST; do
         case "$f" in
-            jq*|patchelf*);;
+            yq*|jq*|patchelf*|cliproxyapi*);;
             nodejs)
                 if [ "$STELLA_CURRENT_PLATFORM" = "linux" ]; then
                     if [ "$STELLA_CURRENT_CPU_FAMILY" = "intel" ]; then
@@ -107,6 +109,14 @@ check_requirements() {
     mode="$2"
     [ "$mode" = "" ] && mode="SILENT"
     case "$feature" in
+        "yq")
+            if command -v yq >/dev/null 2>&1; then
+                [ "$mode" = "VERBOSE" ] && echo "-- yq detected in $(command -v yq)"
+                return 0
+            else
+                return 1
+            fi
+            ;;
         "jq")
             if command -v jq >/dev/null 2>&1; then
                 [ "$mode" = "VERBOSE" ] && echo "-- jq detected in $(command -v jq)"
@@ -146,7 +156,7 @@ check_requirements() {
 }
 
 require() {
-    feature="$1"
+    local feature="$1"
 
     case "$feature" in
         "json5")
@@ -160,6 +170,9 @@ require() {
                 }
             fi
             ;;
-
+        *)
+            echo "ERROR : unknown require $feature"
+            return 1
+            ;;
     esac
 }

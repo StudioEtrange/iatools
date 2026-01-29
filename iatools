@@ -7,6 +7,8 @@ _CURRENT_RUNNING_DIR="$( cd "$( dirname "." )" && pwd )"
 
 . "${_CURRENT_FILE_DIR}/lib/lib.sh"
 . "${_CURRENT_FILE_DIR}/lib/lib_json.sh"
+. "${_CURRENT_FILE_DIR}/lib/lib_yaml.sh"
+. "${_CURRENT_FILE_DIR}/lib/lib_cpa.sh"
 . "${_CURRENT_FILE_DIR}/lib/lib_vscode.sh"
 . "${_CURRENT_FILE_DIR}/lib/lib_gemini.sh"
 . "${_CURRENT_FILE_DIR}/lib/lib_opencode.sh"
@@ -51,8 +53,23 @@ Options:
     oc mcp github install|uninstall             Add mcp-github remote server configuration.
     oc mcp context7 install|uninstall           Add mcp-context7 local server configuration.
     ----
-    vs set <key> <value>                Set a VS Code configuration in settings file.
+    vs set <key> <value>               Set a VS Code configuration in settings file.
     vs show-config                      Show current VSCode configuration.
+    ----
+    cpa : CLIProxyAPI - https://github.com/router-for-me/CLIProxyAPI
+    cpa install                          Install and configure CLIProxyAPI.
+    cpa uninstall                        Uninstall CLIProxyAPI (keeping all configuration unchanged. to remove configuration use 'iatools cpa reset' command)
+    cpa configure                        Configure CLIProxyAPI. ('iatools cpa install' include configuration)
+    cpa info                             Print CLIProxyAPI informations.
+    cpa show-config                      Show current CLIProxyAPI configuration.
+    cpa reset                            Reset all CLIProxyAPI configuration.
+    cpa launch -- <other opencCLIProxyAPIde options>                   Launch CLIProxyAPI.
+    cpa set <key> <value> ["string"]     Set a CLIProxyAPI key in setting file. (i.e: cpa set port 8000) Use optionnal "string" option value is a string.
+    cpa get <key>                        Get a CLIProxyAPI key from setting file. (i.e: cpa get api-key.0)
+    cpa key generate                     Generate a new API key for CLIProxyAPI and add it to the configuration.
+    cpa key list                        List all API keys from CLIProxyAPI configuration. 
+    cpa key reset                        Remove all API keys from CLIProxyAPI configuration.
+    cpa key delete <key>                 Remove an API key from CLIProxyAPI configuration.
     ----
     npm-config set <key> <value>    Set a npm configuration for the internal nodejs.
     ----
@@ -115,6 +132,9 @@ main() {
             ;;
         gc)
             . "${_CURRENT_FILE_DIR}/lib/main_gc.sh"
+            ;;
+        cpa)
+            . "${_CURRENT_FILE_DIR}/lib/main_cpa.sh"
             ;;
         vs)
             . "${_CURRENT_FILE_DIR}/lib/main_vs.sh"

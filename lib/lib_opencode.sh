@@ -16,7 +16,7 @@ opencode_path() {
 opencode_launcher_manage() {
     if [ -f "${IATOOLS_NODEJS_BIN_PATH}opencode" ]; then
         # launcher based on a symbolic link :
-        # link doest not exist OR is not valid
+        # link does not exist OR is not valid
         if [ ! -L "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode" ] || [ ! -e "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode" ]; then
             echo "Create an opencode launcher"
             ln -fsv "${IATOOLS_NODEJS_BIN_PATH}opencode" "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode"
@@ -42,5 +42,5 @@ opencode_merge_config() {
 
 opencode_remove_config() {
     local key_path="$1"
-    json_del_key_from_file "$key_path" "$IATOOLS_OPENCODE_CONFIG_FILE"
+    json_del_key_from_file "$IATOOLS_OPENCODE_CONFIG_FILE" "$key_path" 
 }

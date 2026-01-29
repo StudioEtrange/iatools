@@ -19,7 +19,7 @@ gemini_launcher_manage() {
         chmod +x "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini"
 
         # launcher based on symbolic link :
-        # link doest not exist OR is not valid
+        # link does not exist OR is not valid
         # if [ ! -L "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini" ] || [ ! -e "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini" ]; then
         #     echo "Create a gemini launcher"
         #     ln -fsv "${IATOOLS_NODEJS_BIN_PATH}/gemini" "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini"
@@ -50,7 +50,7 @@ gemini_merge_config() {
 
 gemini_remove_config() {
     local key_path="$1"
-    json_del_key_from_file "$key_path" "$IATOOLS_GEMINI_CONFIG_FILE"
+    json_del_key_from_file "$IATOOLS_GEMINI_CONFIG_FILE" "$key_path"
 }
 
 gemini_add_command() {

@@ -292,7 +292,7 @@ EOF
 }
 EOF
 
-	run json_del_key_from_file "a.b.c" "$tmp"
+	run json_del_key_from_file "$tmp" "a.b.c"
 	assert_success
 	expected=$(cat <<'EOF'
 {
@@ -314,7 +314,7 @@ EOF
 { "a": { "b": { "c": "value", "d": "value" }}}
 EOF
 
-	run json_del_key_from_file "a.b.d" "$tmp"
+	run json_del_key_from_file "$tmp" "a.b.d"
  	assert_success
  	expected=$( cat <<'EOF'
 {
@@ -337,7 +337,7 @@ EOF
 { "a": { "b": { "c": "value", "d": "value" }}}
 EOF
 
-	run json_del_key_from_file "a.w.d" "$tmp"
+	run json_del_key_from_file "$tmp" "a.w.d"
  	assert_failure
  	expected=$( cat <<'EOF'
 {
@@ -469,7 +469,7 @@ EOF
 }
 EOF
 
-	run json_set_key_into_file "a.b.c" '"test"' "$tmp"
+	run json_set_key_into_file "$tmp" "a.b.c" '"test"'
 	assert_success
 	expected=$(cat <<'EOF'
 {
