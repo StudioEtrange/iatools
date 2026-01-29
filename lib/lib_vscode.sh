@@ -1,22 +1,40 @@
 
 
 vscode_path() {
-    [ "$TERM_PROGRAM" = "vscode" ] && echo "We are running inside a VSCode terminal"
+    local target="${1:-current}"
+
+    # this test works on linux AND wsl AND on every other system
+    [ "$TERM_PROGRAM" = "vscode" ] && echo "We are running inside a VS Code terminal"
+
+    # this test works remote ssh on linux AND on local wsl
+    [ ! -z "$VSCODE_IPC_HOOK_CLI" ] && echo "We are using VS Code remote extension (SSH, WSL, ...)"
 
     # vscode pecific paths
-    if [ -d "$HOME/.vscode-server/data/Machine" ]; then
-        # "VSCode Remote - Remote SSH or WSL config file"
-        export IATOOLS_VSCODE_CONFIG_FILE="$HOME/.vscode-server/data/Machine/settings.json"
-    else
-        # https://code.visualstudio.com/docs/configure/settings
-        #   Windows %APPDATA%\Code\User\settings.json
-        #   macOS $HOME/Library/Application\ Support/Code/User/settings.json
-        #   Linux $HOME/.config/Code/User/settings.json
-        case "$STELLA_CURRENT_PLATFORM" in
-            "linux") export IATOOLS_VSCODE_CONFIG_FILE="$HOME/.config/Code/User/settings.json";;
-            "darwin") export IATOOLS_VSCODE_CONFIG_FILE="$HOME/Library/Application Support/Code/User/settings.json";;
-        esac
+    if [ "$target" = "current" ]; then
+        [ -n "$VSCODE_IPC_HOOK_CLI" ] && target="remote" || target="local"
     fi
+
+    case "$target" in
+        "remote")
+                # "VSCode Remote - Remote SSH or WSL config file"
+                export IATOOLS_VSCODE_CONFIG_FILE="$HOME/.vscode-server/data/Machine/settings.json"
+                ;;
+
+        "local")
+                # https://code.visualstudio.com/docs/configure/settings
+                #   Windows %APPDATA%\Code\User\settings.json
+                #   macOS $HOME/Library/Application\ Support/Code/User/settings.json
+                #   Linux $HOME/.config/Code/User/settings.json
+                case "$STELLA_CURRENT_PLATFORM" in
+                    "linux") export IATOOLS_VSCODE_CONFIG_FILE="$HOME/.config/Code/User/settings.json";;
+                    "darwin") export IATOOLS_VSCODE_CONFIG_FILE="$HOME/Library/Application Support/Code/User/settings.json";;
+                esac
+                ;;
+    esac
+
+    # iatools path for vs
+    export IATOOLS_VSCODE_LAUNCHER_HOME="${IATOOLS_LAUNCHER_HOME}/vscode"
+    mkdir -p "${IATOOLS_VSCODE_LAUNCHER_HOME}"
 }
 
 vscode_settings_configure() {
@@ -24,10 +42,10 @@ vscode_settings_configure() {
 
     case "$target" in
         "gemini" )
-            merge_json_file "${_CURRENT_FILE_DIR}/pool/settings/gemini-cli/settings-for-vscode.json" "$IATOOLS_VSCODE_CONFIG_FILE"
+            merge_json_file "${IATOOLS_POOL}/settings/gemini-cli/settings-for-vscode.json" "$IATOOLS_VSCODE_CONFIG_FILE"
         ;;
         "opencode" )
-            merge_json_file "${_CURRENT_FILE_DIR}/pool/settings/opencode/settings-for-vscode.json" "$IATOOLS_VSCODE_CONFIG_FILE"
+            merge_json_file "${IATOOLS_POOL}/settings/opencode/settings-for-vscode.json" "$IATOOLS_VSCODE_CONFIG_FILE"
         ;;
     esac
 
@@ -149,7 +167,7 @@ vscode_remove_config() {
 vscode_set_config() {
     local key_path="$1"
     local value="$2"
-    json_set_key_into_file "$key_path" "$value" "$IATOOLS_VSCODE_CONFIG_FILE"   
+    json_set_key_into_file "$key_path" "$value" "$IATOOLS_VSCODE_CONFIG_FILE"
 }
 
 # http proxy management ------------------------
