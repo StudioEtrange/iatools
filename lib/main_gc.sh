@@ -87,7 +87,7 @@ case "$sub_command" in
     cmd-plan)
         case "$1" in
             "install")
-                gemini_add_command "${_CURRENT_FILE_DIR}/pool/cmd/plan/plan.toml"
+                gemini_add_command "${IATOOLS_POOL}/cmd/plan/plan.toml"
                 ;;
             "uninstall")
                 gemini_remove_command "plan.toml"

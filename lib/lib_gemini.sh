@@ -34,9 +34,9 @@ gemini_settings_configure() {
     echo "add some default settings :"
     echo " - disable statistics usage data send"
     echo " - support for autoloading AGENTS.md file"
-    cat "${_CURRENT_FILE_DIR}/pool/settings/gemini-cli/settings.json"
+    cat "${IATOOLS_POOL}/settings/gemini-cli/settings.json"
     printf "\n"
-    merge_json_file "${_CURRENT_FILE_DIR}/pool/settings/gemini-cli/settings.json" "$IATOOLS_GEMINI_CONFIG_FILE"
+    merge_json_file "${IATOOLS_POOL}/settings/gemini-cli/settings.json" "$IATOOLS_GEMINI_CONFIG_FILE"
 }
 
 gemini_settings_remove() {
@@ -44,17 +44,17 @@ gemini_settings_remove() {
 }
 
 gemini_merge_config() {
-    file_to_merge="$1"
+    local file_to_merge="$1"
     merge_json_file "$file_to_merge" "$IATOOLS_GEMINI_CONFIG_FILE"
 }
 
 gemini_remove_config() {
-    key_path="$1"
+    local key_path="$1"
     json_del_key_from_file "$key_path" "$IATOOLS_GEMINI_CONFIG_FILE"
 }
 
 gemini_add_command() {
-    command_file="$1"
+    local command_file="$1"
 
      if [ ! -f "${command_file}" ]; then
         echo "ERROR : command file not found ${command_file}"
@@ -67,7 +67,7 @@ gemini_add_command() {
 }
 
 gemini_remove_command() {
-    command_file="$1"
+    local command_file="$1"
 
     rm -f "${IATOOLS_GEMINI_CONFIG_CMD_HOME}/${command_file}"
 }

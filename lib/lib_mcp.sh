@@ -24,7 +24,7 @@ mcp_server_manage() {
                     fi
                     echo "    Provided DC_API_KEY for Data Commons API key from https://apikeys.datacommons.org/ : $DC_API_KEY"
                     case "$agent_name" in
-                        "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/data-commons/gemini-cli/settings.json";;
+                        "gc")gemini_merge_config "${IATOOLS_POOL}/mcp-servers/data-commons/gemini-cli/settings.json";;
                         "oc")echo " -- ERROR : not supported";exit 1;;
                         *)echo " -- ERROR : missing or unknown target $agent_name";exit 1;;
                     esac
@@ -50,7 +50,7 @@ mcp_server_manage() {
                     echo "    Configuring"
                     export STELLA_ORIGINAL_SYSTEM_PATH
                     case "$agent_name" in
-                        "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/desktop-commander/gemini-cli/settings.json";;
+                        "gc")gemini_merge_config "${IATOOLS_POOL}/mcp-servers/desktop-commander/gemini-cli/settings.json";;
                         "oc")echo " -- ERROR : not supported";exit 1;;
                         *)echo " -- ERROR : missing or unknown target $agent_name";exit 1;;
                     esac
@@ -80,8 +80,8 @@ mcp_server_manage() {
                     #${IATOOLS_PYTHON_BIN_PATH}python -m uv pip install -v mcp-server-calculator
                     echo "    Configuring"
                     case "$agent_name" in
-                        "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/gemini-cli/settings.json";;
-                        "oc")opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/calculator/opencode/opencode.json";;
+                        "gc")gemini_merge_config "${IATOOLS_POOL}/mcp-servers/calculator/gemini-cli/settings.json";;
+                        "oc")opencode_merge_config "${IATOOLS_POOL}/mcp-servers/calculator/opencode/opencode.json";;
                         *)echo " -- ERROR : missing or unknown target $agent_name";exit 1;;
                     esac
                     echo "    Configuration has been added"
@@ -113,8 +113,8 @@ mcp_server_manage() {
                     [ ! -z "$other_arg" ] && export CONTEXT7_API_KEY="$other_arg"                        
                     echo "    Provided optional CONTEXT7_API_KEY : $CONTEXT7_API_KEY"
                     case "$agent_name" in
-                        "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/gemini-cli/settings.json";;
-                        "oc")opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/context7/opencode/opencode.json";;
+                        "gc")gemini_merge_config "${IATOOLS_POOL}/mcp-servers/context7/gemini-cli/settings.json";;
+                        "oc")opencode_merge_config "${IATOOLS_POOL}/mcp-servers/context7/opencode/opencode.json";;
                         *)echo " -- ERROR : missing or unknown target $agent_name";exit 1;;
                     esac
                     echo "    Configuration has been added"
@@ -137,8 +137,8 @@ mcp_server_manage() {
                 "install")
                     echo "    Configuring"
                     case "$agent_name" in
-                        "gc")gemini_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/github/gemini-cli/settings.json";;
-                        "oc")opencode_merge_config "${_CURRENT_FILE_DIR}/pool/mcp-servers/github/opencode/opencode.json";;
+                        "gc")gemini_merge_config "${IATOOLS_POOL}/mcp-servers/github/gemini-cli/settings.json";;
+                        "oc")opencode_merge_config "${IATOOLS_POOL}/mcp-servers/github/opencode/opencode.json";;
                         *)echo " -- ERROR : missing or unknown target $agent_name";exit 1;;
                     esac
                     echo "    Configuration has been added"
