@@ -145,32 +145,37 @@ build_jq_expr_from_path() {
 #   -s : size of indentation
 #   -c : convert inplace without making output file https://github.com/json5/json5/blob/main/lib/cli.js#L87
 sanitize_json() {
-    arg="$1"
+    local arg="$1"
 
     require "json5"
     
     if [ ! -t 0 ]; then
         # parse stream
         PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" json5 -s 2
-    else 
-        if [ -n "$arg" ] && [ "$arg" != "-" ]; then
-            if [ ! -f "$arg" ]; then
-                echo "$arg" | PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" json5 -s 2
-                return $?
-            fi
+        return $?
+    fi
 
-            local tmp_file="$(mktemp)"
+    if [ -z "$arg" ] || [ "$arg" = "-" ]; then
+        echo "ERROR: sanitize_json expects stdin or a file/string argument" >&2
+        return 2
+    fi
 
-            PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" json5 -s 2 "$arg" 2>/dev/null >"$tmp_file" 
-            if [ $? -ne 0 ]; then
-                echo "ERROR : failed to sanitize json from $arg"
-                rm -f "$tmp_file"
-                return 1
-            else
-                mv "$tmp_file" "$arg"
-                return 0
-            fi
-        fi
+    if [ ! -f "$arg" ]; then
+        echo "$arg" | PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" json5 -s 2
+        return $?
+    fi
+
+
+    local tmp_file="$(mktemp)"
+
+    PATH="${IATOOLS_NODEJS_BIN_PATH}:${PATH}" json5 -s 2 "$arg" 2>/dev/null >"$tmp_file" 
+    if [ $? -ne 0 ]; then
+        echo "ERROR : failed to sanitize json from $arg"
+        rm -f "$tmp_file"
+        return 1
+    else
+        mv "$tmp_file" "$arg"
+        return 0
     fi
 }
 

@@ -27,7 +27,7 @@ opencode_launcher_manage() {
 }
 
 opencode_settings_configure() {
-    merge_json_file "${_CURRENT_FILE_DIR}/pool/settings/opencode/opencode.json" "$IATOOLS_OPENCODE_CONFIG_FILE"
+    merge_json_file "${IATOOLS_POOL}/settings/opencode/opencode.json" "$IATOOLS_OPENCODE_CONFIG_FILE"
 }
 
 opencode_settings_remove() {
@@ -36,11 +36,11 @@ opencode_settings_remove() {
 }
 
 opencode_merge_config() {
-    file_to_merge="$1"
+    local file_to_merge="$1"
     merge_json_file "$file_to_merge" "$IATOOLS_OPENCODE_CONFIG_FILE"
 }
 
 opencode_remove_config() {
-    key_path="$1"
+    local key_path="$1"
     json_del_key_from_file "$key_path" "$IATOOLS_OPENCODE_CONFIG_FILE"
 }

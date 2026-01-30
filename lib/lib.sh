@@ -2,6 +2,8 @@
 
 
 iatools_path() {
+    export IATOOLS_POOL="${STELLA_APP_ROOT}/pool"
+    
     export IATOOLS_LAUNCHER_HOME="${STELLA_APP_WORK_ROOT}/launcher"
     mkdir -p "${IATOOLS_LAUNCHER_HOME}"
 
