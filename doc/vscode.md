@@ -18,8 +18,13 @@
   * Provide a sysroot with glibc 2.28
     * Build using crosstool-NG and configs from https://github.com/microsoft/vscode-linux-build-agent
     * OR Extract a precompiled sysroot from https://github.com/microsoft/vscode-linux-build-agent/releases
-  * 
-VSCODE_SERVER_CUSTOM_GLIBC_LINKER : path to the dynamic linker (ld-linux.so) in the sysroot (used for --set-interpreter option with patchelf)
-VSCODE_SERVER_CUSTOM_GLIBC_PATH : path to the library locations in the sysroot (used as --set-rpath option with patchelf)
-VSCODE_SERVER_PATCHELF_PATH : path to the patchelf binary on the remote host 
+  * Use environment variable
+    ```
+    VSCODE_SERVER_CUSTOM_GLIBC_LINKER : path to the dynamic linker (ld-linux.so) in the sysroot (used for --set-interpreter option with patchelf)
+    VSCODE_SERVER_CUSTOM_GLIBC_PATH : path to the library locations in the sysroot (used as --set-rpath option with patchelf)
+    VSCODE_SERVER_PATCHELF_PATH : path to the patchelf binary on the remote host
+    ```
 
+* Gemini cli companion specification
+  * discovery files for MCP server : $TMPDIR/gemini/ide/gemini-ide-server-${PID}-${PORT}.json
+  * https://geminicli.com/docs/ide-integration/ide-companion-spec/
