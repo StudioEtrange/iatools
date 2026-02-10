@@ -151,6 +151,12 @@ CLIProxyAPI is a tool that bridges the gap between command-line interfaces and A
       -H "Authorization: Bearer YOUR_TOKEN_HERE" \
       -H "Content-Type: application/json"
 
+### Code Assistant Manager [cam]
+
+* code-assitant-manager allows you to manage the code assistants like claude code, codex, gemini on a single interface.
+* https://github.com/Chat2AnyLLM/code-assistant-manager
+* cam + cpa : https://www.reddit.com/r/vibecoding/comments/1pwmwv2/how_to_connect_code_assistants_like_claude_code/
+
 ### VS Code
 
 See [VS Code](doc/vscode.md) 
