@@ -40,7 +40,7 @@ cpa_settings_configure() {
     cpa_settings_api_key_create
     
     cpa_settings_management_api_key_reset
-    cpa_settings_management_api_key
+    cpa_settings_management_api_key_create
 }
 
 cpa_settings_remove() {
@@ -119,14 +119,18 @@ cpa_settings_management_api_key_reset() {
     cpa_set_config ".remote-management.secret-key" "" "double"
 }
 
-cpa_settings_management_api_key() {
+cpa_settings_management_api_key_create() {
     local key="$($STELLA_API generate_password 12 "[:alnum:]")"
-    cpa_set_config ".remote-management.secret-key" "$key" "double"
-    echo "New management API key created: $key"
+    cpa_settings_management_api_key_set "$key"
+    echo "New management API key created"
     echo "WARN : management API key is hashed in config file, so save it now"
 }
-#ZCT1W65JEa60TNX8X4rGAa7VoRyJchVSu9IoJruAAOnZcE5g
-#vl2KvO9H7f0n
+
+cpa_settings_management_api_key_set() {
+    local key="$1"
+    cpa_set_config ".remote-management.secret-key" "$key" "double"
+}
+
 # API key management ------------------------
 cpa_settings_api_key_reset() {
     cpa_remove_config ".api-keys"

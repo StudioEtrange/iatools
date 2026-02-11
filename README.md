@@ -20,35 +20,11 @@ IATools is an experimental swiss-knife command-line application designed to stre
 
 `iatools` provides a simple command-line interface to manage your tools and environments.
 
-| Command                                                 | Description                                                                                                                              |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **init**                                                | Install/Reinstall dependencies.                                                                                                          |
-| **help**                                                | Display this help message.                                                                                                               |
-| **shell**                                               | Enter a sub-shell with the `iatools` environment and paths configured.                                                                    |
-| |
-| **gc install [@version]**                               | Install and configure a specific version of Gemini CLI (e.g., `@latest`, `@nightly`, `@preview`).                                        |
-| **gc uninstall**                                        | Uninstall Gemini CLI (keeps configuration).                                                                                              |
-| **gc configure**                                        | (Re)Configure Gemini CLI.                                                                                                                |
-| **gc show-config**                                      | Show the current Gemini CLI configuration.                                                                                               |
-| **gc reset**                                            | Reset all Gemini CLI configuration.                                                                                                      |
-| **gc launch [ctx] -- <opts>**                           | Launch Gemini CLI, optionally in a specific context folder, passing extra options.                                                       |
-| **gc mcp calculator install\|uninstall**                | Add or remove the `calculator` MCP server for Gemini CLI.                                                                                |
-| **gc mcp github install\|uninstall**                    | Add or remove the `github` MCP server for Gemini CLI.                                                                                    |
-| **gc mcp desktop-commander install\|uninstall**         | Add or remove the `desktop-commander` MCP server for Gemini CLI.                                                                         |
-| **gc mcp context7 install\|uninstall [CONTEXT7_API_KEY]**        | Add or remove the `context7` MCP server for Gemini CLI, with an optional API key given as argument or CONTEXT7_API_KEY.                  |
-| **gc mcp data-commons install\|uninstall [DC_API_KEY]**    | Add or remove the `data-commons` MCP server for Gemini CLI (requires an API key as argument or DC_API_KEY env var).                      |
-| |
-| **oc install**                                          | Install and configure Opencode CLI.                                                                                                      |
-| **oc uninstall**                                        | Uninstall Opencode CLI (keeps configuration).                                                                                            |
-| **oc configure**                                        | (Re)Configure Opencode CLI.                                                                                                              |
-| **oc show-config**                                      | Show the current Opencode CLI configuration.                                                                                             |
-| **oc reset**                                            | Reset all Opencode CLI configuration.                                                                                                    |
-| **oc launch [ctx] -- <opts>**                           | Launch Opencode CLI, optionally in a specific context folder, passing extra options.                                                     |
-| **oc mcp calculator install\|uninstall**                | Add or remove the `calculator` MCP server for Opencode CLI.                                                                              |
-| **oc mcp github install\|uninstall**                    | Add or remove the `github` MCP server for Opencode CLI.                                                                                  |
-| **oc mcp context7 install\|uninstall**                  | Add or remove the `context7` MCP server for Opencode CLI.                                                                                |
-| |
-| **npm-config set <key> <value>**                        | Set a global configuration for the internal `npm`.                                                                                       |
+| Command | Description |
+| - | - |
+| **init** | Install/Reinstall dependencies |
+| **help** | Display help message |
+| **shell** | Enter a sub-shell with the `iatools` environment and paths configured |
 
 ### How-To
 
@@ -105,10 +81,12 @@ An open-source AI agent that brings the power of Gemini directly into your termi
   * 821 stars Expose Gemini CLI endpoints as OpenAI API (mainly on Cloudflare Workers) : https://github.com/GewoonJaap/gemini-cli-openai 
   * 20 stars - Use Gemini CodeAssist (Gemini CLI) through the OpenAI/Anthropic API : https://github.com/ubaltaci/gemini-cli-proxy
   * 48 stars - Gemini CLI wrapper to serve Gemini models through an OpenAI-compatible API : https://github.com/Brioch/gemini-openai-proxy
-  * 127 stars - Wrap Gemini CLI as an OpenAI-compatible API service https://github.com/nettee/gemini-cli-proxy
+  * 127 stars - Wrap Gemini CLI as an OpenAI-compatible API service : https://github.com/nettee/gemini-cli-proxy
+  * 720 stars - convert the OpenAI API protocol to the Google Gemini protocol : https://github.com/zhu327/gemini-openai-proxy https://deepwiki.com/zhu327/gemini-openai-proxy
   * 128 stars - Exposes all built-in tools from gemini-cli through a unified MCP endpoint and OpenAI-Compatible API Bridge https://github.com/Intelligent-Internet/gemini-cli-mcp-openai-bridge
   * 8900 stars - Wrap Gemini CLI, Antigravity, ChatGPT Codex, Claude Code, Qwen Code, iFlow as an OpenAI/Gemini/Claude/Codex compatible API service - https://github.com/router-for-me/CLIProxyAPI - https://github.com/brokechubb/cliproxyapi-installer
   * 106 stars - Experimental gemini-cli as MCP server : https://github.com/levindixon/gemini-cli-mcp-server
+
 
 ### Opencode CLI
 
@@ -133,27 +111,13 @@ IATools simplifies connecting to MCP (Model Context Protocol) servers, allowing 
 * **Data Commons**: Tools and agents for interacting with the Data Commons Knowledge Graph using the Model Context Protocol (MCP). ([Source](https://github.com/datacommonsorg/agent-toolkit))
 
 
-### CLIProxyAPI
-
-CLIProxyAPI is a tool that bridges the gap between command-line interfaces and AI models, enabling seamless integration and interaction.
-
-* https://help.router-for.me/
-* https://github.com/router-for-me/CLIProxyAPI
-* https://github.com/router-for-me/CLIProxyAPIPlus
-* Installer project : https://github.com/brokechubb/cliproxyapi-installer
-
-* login to gemini cli:
-  * ./cli-proxy-api --login [--no-browser] [--project_id <your_project_id>]
-  * ./iatools cpa launch --  --login --no-browser
-    * NOTE : on vscode connected with remote SSH Forward port 8085 to your local machine
-  * list available models
-    * curl -X GET "http://localhost:8318/v1/models" \
-      -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-      -H "Content-Type: application/json"
-
 ### VS Code
 
 See [VS Code](doc/vscode.md) 
+
+### CLIProxyAPI
+
+See [CLIProxyAPI](doc/cliproxyapi.md) 
 
 ## Design Notes 
 
@@ -209,18 +173,13 @@ IATools leverages the **Stella** framework for its core functionality. Stella pr
 
 
 
-## TODO
+## TODO and VARIOUS NOTES
 
-* kilocode and roocode can use gemini-cli as LLM provider
 * kilocode vsextension config home : $HOME/.vscode-server/data/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json
 * LiteLLM and gemini-cli https://docs.litellm.ai/docs/tutorials/litellm_gemini_cli
 * process manager goreman https://github.com/mattn/goreman
 * override gemini-cli with GEMINI_API_KEY, GEMINI_MODEL, GOOGLE_GEMINI_BASE_URL
-* gemini api compatible openai : 
-  * https://ai.google.dev/gemini-api/docs/openai?hl=fr#rest
-  * https://github.com/PublicAffairs/openai-gemini
-  * https://github.com/zhu327/gemini-openai-proxy https://deepwiki.com/zhu327/gemini-openai-proxy
-  * https://huggingface.co/engineofperplexity/gemini-openai-proxy/blob/main/readme.md
+
 
 
 ## Contributors
