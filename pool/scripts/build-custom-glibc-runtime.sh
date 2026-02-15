@@ -83,7 +83,7 @@ check_command() {
 copy_versions_with_symlinks() {
     base="$1"; src="$2"; dst="$3"
     mkdir -p "$dst"
-
+    info "copy $base"
     find "$src" -maxdepth 1 \( -name "$base" -o -name "$base.*" \) |
     while read -r f; do
         b="$(basename "$f")"
@@ -122,10 +122,11 @@ check_command "file" "stop"
 
 # install patchelf
 PATCHELF="$PROJECT_WORKSPACE_ROOT/patchelf/bin/patchelf"
-PATH="$PROJECT_WORKSPACE_ROOT/patchelf/bin:$PATH"
-if [ -f "$PATCHELF" ]; then
+export PATH="$PROJECT_WORKSPACE_ROOT/patchelf/bin:$PATH"
+if [ -x "$PATCHELF" ]; then
     info "Patchelf is already installed."
 else
+    rm -rf "$PROJECT_WORKSPACE_ROOT/patchelf"
     mkdir -p "$PROJECT_WORKSPACE_ROOT/patchelf"
     cd "$PROJECT_WORKSPACE_ROOT/patchelf"
     wget --no-check-certificate "https://github.com/NixOS/patchelf/releases/download/0.18.0/patchelf-0.18.0-x86_64.tar.gz"
@@ -137,7 +138,7 @@ check_command "patchelf" "stop"
 
 
 # install miniforge3
-PATH="$MINIFORGE_ROOT/bin:$PATH"
+export PATH="$MINIFORGE_ROOT/bin:$PATH"
 
 if check_command "mamba"; then
     info "Mamba is already installed."
@@ -155,15 +156,15 @@ if mamba env list | awk '{print $1}' | grep -qx "$MAMBA_ENV_NAME"; then
 	info "Mamba environment $MAMBA_ENV_NAME already exists..."
 else
 	info "Creating mamba environment..."
-	mamba create -n $MAMBA_ENV_NAME
-    MAMBA_ENV_PREFIX="$(
-        mamba info --envs | awk -v env="$MAMBA_ENV_NAME" '$1==env {print $NF}'
-    )"
-    [ -n "$MAMBA_ENV_PREFIX" ] || error "Unable to determine MAMBA_ENV_PREFIX, environment $MAMBA_ENV_NAME may not have been created successfully."
+	mamba create -n "$MAMBA_ENV_NAME"
 fi
 
+MAMBA_ENV_PREFIX="$(mamba info --envs | awk -v env="$MAMBA_ENV_NAME" '$1==env {print $NF}')"
+[ -n "$MAMBA_ENV_PREFIX" ] || error "Unable to determine MAMBA_ENV_PREFIX, environment $MAMBA_ENV_NAME may not have been created successfully."
+
+
 info "Activating mamba environment"
-source activate $MAMBA_ENV_NAME
+source activate $"MAMBA_ENV_NAME"
 
 
 check_command "make" "stop"
@@ -249,7 +250,7 @@ done
 
 
 info "Assemble a small custom runtime with built glibc and other libraries"
-info "Copy libstdc++.so and libgcc_s.so.1 from mamba env"
+info "Copy some libraries from mamba env"
 mkdir -p "$GLIBC_INSTALL_DIR/rtlib"
 
 copy_versions_with_symlinks "libgcc_s.so" "$MAMBA_ENV_PREFIX/lib" "$GLIBC_INSTALL_DIR/rtlib"
