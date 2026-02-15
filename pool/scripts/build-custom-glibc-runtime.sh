@@ -285,9 +285,8 @@ while IFS= read -r -d '' f; do
             info "Remove this RPATH/RUNPATH : $old"
             "$PATCHELF" --remove-rpath "$f" 2>/dev/null || true
         else
-            info "Remove RPATH/RUNPATH value $old and set RPATH to $new"
-            # force legact RPATH instead of RUNPATH because RUNPATH is not reliably used to resolve transitive dependencies loaded via dlopen() (e.g., native modules like node-pty) 
-            "$PATCHELF" --force-rpath --set-rpath "$new" "$f" 2>/dev/null || true
+            info "Change RPATH/RUNPATH value $old to $new"
+            "$PATCHELF" --set-rpath "$new" "$f" 2>/dev/null || true
         fi
     fi
 done

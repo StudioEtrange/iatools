@@ -27,8 +27,11 @@ patch() {
     interpreter="$("${PATCHELF}" --print-interpreter "${f}" 2>/dev/null || true)"
     if [ "${interpreter}" != "${EXPECTED_INTERPRETER}" ]; then
         # Apply rpath then interpreter
-        if "${PATCHELF}" --set-rpath "${EXPECTED_RPATH}" "${f}" && \
-            "${PATCHELF}" --set-interpreter "${EXPECTED_INTERPRETER}" "${f}"; then
+
+        # force legacy RPATH instead of RUNPATH because RUNPATH is not reliably used to resolve transitive dependencies loaded via dlopen() 
+        # (e.g., native modules like node-pty) 
+        if "${PATCHELF}" --force-rpath --set-rpath "${EXPECTED_RPATH}" "${f}" 2>/dev/null && \
+            "${PATCHELF}" --set-interpreter "${EXPECTED_INTERPRETER}" "${f}" 2>/dev/null; then
             
             echo "Patch applied on ${f}"
             print_info "${f}"
