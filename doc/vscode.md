@@ -49,6 +49,7 @@
     * If you have error with wget at connection `wget unrecognized option "--no-config"` because wget is too old
       * VS Code / User Settings / Remote.SSH : check Curl And Wget Configuration Files (OR in settings.json : `"remote.SSH.useCurlAndWgetConfigurationFiles" : true`)
       
+    * git integration in VS Code may not work if you have an old git version (<2.x) in the PATH of your old linux system, you should update it or provide a new version in settings.json : `"git.path" : "/opt/git/bin/git"`
 
 * *Connect with SSH Remote to the host*
   * first time and at each new VS Code version you have to connect to the host first and it will fail because VS Code server is not yet patched
