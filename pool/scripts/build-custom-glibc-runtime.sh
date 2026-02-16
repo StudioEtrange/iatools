@@ -164,7 +164,7 @@ MAMBA_ENV_PREFIX="$(mamba info --envs | awk -v env="$MAMBA_ENV_NAME" '$1==env {p
 
 
 info "Activating mamba environment"
-source activate $"MAMBA_ENV_NAME"
+source activate "$MAMBA_ENV_NAME"
 
 
 check_command "make" "stop"
