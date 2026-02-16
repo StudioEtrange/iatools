@@ -13,6 +13,22 @@ opencode_path() {
 
 }
 
+# add opencode launcher in path for shell
+opencode_path_register_for_shell() {
+    local shell_name="$1"
+    path_register_for_shell "opencode" "$shell_name" "${IATOOLS_OPENCODE_LAUNCHER_HOME}"
+}
+opencode_path_unregister_for_shell() {
+    local shell_name="$1"
+    path_unregister_for_shell "opencode" "$shell_name"
+}
+opencode_path_register_for_vs_terminal() {
+    vscode_path_register_for_vs_terminal "opencode" "${IATOOLS_OPENCODE_LAUNCHER_HOME}"
+}
+opencode_path_unregister_for_vs_terminal() {
+    vscode_path_unregister_for_vs_terminal "opencode" "${IATOOLS_OPENCODE_LAUNCHER_HOME}"
+}
+
 opencode_launcher_manage() {
     if [ -f "${IATOOLS_NODEJS_BIN_PATH}opencode" ]; then
         # launcher based on a symbolic link :

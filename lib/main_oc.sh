@@ -13,12 +13,20 @@ case "$sub_command" in
         vscode_settings_configure "opencode"
         
         opencode_launcher_manage
+
+        echo "You could now register it's path in shell OR vscode terminal"
+        echo "$0 oc register bash|zsh|fish"
+        echo "   OR"
+        echo "$0 oc register vs"
         ;;
     uninstall)
         if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
 
-        echo "Uninstalling Opencode (keeping all configuration unchanged. to remove configuration use reset command)"
+        echo "Uninstalling Opencode and unregister Opencode PATH (keep all configuration unchanged, to remove configuration use reset command)"
+        
         PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npm uninstall -g opencode-ai
+        opencode_path_unregister_for_shell "all"
+        opencode_path_unregister_for_vs_terminal
 
         opencode_launcher_manage
         ;;
@@ -28,6 +36,28 @@ case "$sub_command" in
         vscode_settings_configure "opencode"
 
         opencode_launcher_manage
+        ;;
+    register)
+        echo "Registering Gemini CLI launcher in PATH for $1"
+        case "$1" in
+            "vs")
+                opencode_path_register_for_vs_terminal
+                ;;
+            *)
+                opencode_path_register_for_shell "$1"
+                ;;
+        esac
+        ;;
+    unregister)
+        echo "Unegistering Opencode launcher PATH from $1"
+        case "$1" in
+            "vs")
+                opencode_path_unregister_for_vs_terminal
+                ;;
+            *)
+                opencode_path_unregister_for_shell "$1"
+                ;;
+        esac
         ;;
     show-config)
         if [ -f "$IATOOLS_OPENCODE_CONFIG_FILE" ]; then

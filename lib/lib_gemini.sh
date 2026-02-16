@@ -11,6 +11,23 @@ gemini_path() {
 
 }
 
+# add gemini launcher in path for shell
+gemini_path_register_for_shell() {
+    local shell_name="$1"
+    path_register_for_shell "gemini" "$shell_name" "${IATOOLS_GEMINI_LAUNCHER_HOME}"
+}
+gemini_path_unregister_for_shell() {
+    local shell_name="$1"
+    path_unregister_for_shell "gemini" "$shell_name"
+}
+gemini_path_register_for_vs_terminal() {
+    vscode_path_register_for_vs_terminal "gemini" "${IATOOLS_GEMINI_LAUNCHER_HOME}"
+}
+gemini_path_unregister_for_vs_terminal() {
+    vscode_path_unregister_for_vs_terminal "gemini" "${IATOOLS_GEMINI_LAUNCHER_HOME}"
+}
+
+
 
 gemini_launcher_manage() {
     if [ -f "${IATOOLS_NODEJS_BIN_PATH}gemini" ]; then

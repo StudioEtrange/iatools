@@ -103,6 +103,89 @@ iatools_init() {
     iatools_install_dependencies
 }
 
+
+
+# add a path at PATH env variable list when a shell launch
+path_register_for_shell() {
+    local name="$1"
+    local shell_name="$2"
+    local path_to_add="$3"
+    local set_path_now="${4:-false}"
+
+    local rc_file
+
+    local BEGIN_MARK="# >>> iatools-${name}-path >>>"
+    local END_MARK="# <<< iatools-${name}-path <<<"
+
+    [ "$shell_name" = "bash" ] && rc_file="$HOME/.bashrc"
+    [ "$shell_name" = "zsh" ] && rc_file="$HOME/.zshrc"
+    [ "$shell_name" = "fish" ] && rc_file="$HOME/.config/fish/config.fish"
+
+    case "$shell_name" in
+        "bash"|"zsh")
+            [ -f "$rc_file" ] && path_unregister_for_shell "$name" "$shell_name" || touch "$rc_file"
+            if ! grep -Fq "$BEGIN_MARK" "$rc_file"; then
+                {
+                    echo "$BEGIN_MARK"
+                    echo "export PATH=\"${path_to_add}:\$PATH\""
+                    echo "$END_MARK"
+                } >> "$rc_file"
+            fi
+            ;;
+        "fish")
+            mkdir -p "$(dirname "$rc_file")"
+            [ -f "$rc_file" ] && path_unregister_for_shell "$name" "$shell_name" || touch "$rc_file"
+            if ! grep -Fq "$BEGIN_MARK" "$rc_file"; then
+                {
+                    echo "$BEGIN_MARK"
+                    echo "set -gx PATH \"${path_to_add}\" \$PATH"
+                    echo "$END_MARK"
+                } >> "$rc_file"
+            fi
+            ;;
+         *) 
+            echo "error : unsupported shell $shell_name"
+            ;;
+    esac
+
+}
+
+# remove path
+# use 'all' shell_name to unregister to all known shell
+path_unregister_for_shell() {
+    local name="$1"
+    local shell_name="$2"
+    local rc_file
+
+    local BEGIN_MARK="# >>> iatools-${name}-path >>>"
+    local END_MARK="# <<< iatools-${name}-path <<<"
+
+    local shell_list
+    [ "$shell_name" = "all" ] && shell_list="bash zsh fish" || shell_list="$shell_name"
+
+    for s in $shell_list; do
+        [ "$s" = "bash" ] && rc_file="$HOME/.bashrc"
+        [ "$s" = "zsh" ] && rc_file="$HOME/.zshrc"
+        [ "$s" = "fish" ] && rc_file="$HOME/.config/fish/config.fish"
+
+        case "$s" in
+            "bash"|"zsh"|"fish")
+                if [ -f "$rc_file" ]; then
+                    local tmp_file="$(mktemp)"
+                    awk -v begin="$BEGIN_MARK" -v end="$END_MARK" ' 
+                        $0 == begin { skip=1; next } 
+                        $0 == end { skip=0; next } !skip 
+                    ' "$rc_file" > "$tmp_file" && mv "$tmp_file" "$rc_file"
+                    rm -f "$tmp_file"
+                fi
+                ;;
+            *) 
+                echo "error : unsupported shell : $s"
+                ;;
+        esac
+    done
+}
+
 # check availability
 check_requirements() {
     feature="$1"

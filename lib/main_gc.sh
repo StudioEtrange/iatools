@@ -11,7 +11,6 @@ case "$sub_command" in
         echo "Installing Gemini CLI ${version}"
         # available versions : https://www.npmjs.com/package/@google/gemini-cli-core
         # latest is stable version
-        # 2025/09/13 : cannot install behind a http proxy : https://github.com/google-gemini/gemini-cli/issues/7795
         PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npm install --verbose -g @google/gemini-cli${version}
         
         echo "Configuring Gemini CLI"
@@ -19,12 +18,20 @@ case "$sub_command" in
         vscode_settings_configure "gemini"
 
         gemini_launcher_manage
+
+        echo "You could now register it's path in shell OR vscode terminal"
+        echo "$0 gc register bash|zsh|fish"
+        echo "   OR"
+        echo "$0 gc register vs"      
         ;;
     uninstall)
         if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
 
-        echo "Uninstalling Gemini CLI (keeping all configuration unchanged. to remove configuration use reset command)"
+        echo "Uninstalling Gemini CLI and unregister Gemini CLI PATH (keep all configuration unchanged, to remove configuration use reset command)"
+        
         PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npm uninstall -g @google/gemini-cli
+        gemini_path_unregister_for_shell "all"
+        gemini_path_unregister_for_vs_terminal
 
         gemini_launcher_manage
         ;;
@@ -34,6 +41,28 @@ case "$sub_command" in
         vscode_settings_configure "gemini"
 
         gemini_launcher_manage
+        ;;
+    register)
+        echo "Registering Gemini CLI launcher in PATH for $1"
+        case "$1" in
+            "vs")
+                gemini_path_register_for_vs_terminal
+                ;;
+            *)
+                gemini_path_register_for_shell "$1"
+                ;;
+        esac
+        ;;
+    unregister)
+        echo "Unegistering Gemini CLI launcher PATH from $1"
+        case "$1" in
+            "vs")
+                gemini_path_unregister_for_vs_terminal
+                ;;
+            *)
+                gemini_path_unregister_for_shell "$1"
+                ;;
+        esac
         ;;
     show-config)
         if [ -f "$IATOOLS_GEMINI_CONFIG_FILE" ]; then

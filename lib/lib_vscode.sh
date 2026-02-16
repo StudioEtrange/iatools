@@ -37,6 +37,7 @@ vscode_path() {
     mkdir -p "${IATOOLS_VSCODE_LAUNCHER_HOME}"
 }
 
+# inject specific target settings for vscode
 vscode_settings_configure() {
     local target="$1"
 
@@ -48,43 +49,78 @@ vscode_settings_configure() {
             merge_json_file "${IATOOLS_POOL}/settings/opencode/settings-for-vscode.json" "$IATOOLS_VSCODE_CONFIG_FILE"
         ;;
     esac
+}
 
+# remove specific target settings from vscode
+vscode_settings_remove() {
+    local target="$1"
+    # NOTHING TO DO
+    case "$target" in
+        "gemini");;
+        "opencode" );;
+    esac
+}
+
+# PATH management -----------------
+# NOTE : we need to keep at least code cli binary reacheable to launch vscode extension installation
+#   when "terminal.integrated.env.linux".PATH on remote is empty, vscode remote-cli code path is auto added to PATH variable in terminal
+#   when "terminal.integrated.env.linux".PATH on remote is defined, vscode remote-cli code path is NOT auto added to PATH variable in terminal
+#       (the value of "terminal.integrated.inheritEnv" do not change this behavior)
+#   so we add it manually because this script always set "terminal.integrated.env.linux".PATH which will never be empty anymore
+vscode_path_register_for_vs_terminal() {
+    local target="$1"
+    local path_to_add="$2"
 
     # A/ add ${env:PATH} --------------
-    echo "- configure VS Code : add current PATH to terminal.integrated.env.linux PATH environment variable using \${env:PATH} value"
-    vscode_settings_add_path '${env:PATH}' "POSTPEND_IF_NOT_EXISTS"
+    echo "- configure VS Code : add current PATH to terminal.integrated.env.linux and terminal.integrated.env.osx PATH environment variable using \${env:PATH} value"
+    vscode_settings_add_path_for_vs_terminal '${env:PATH}' "POSTPEND_IF_NOT_EXISTS"
     
+    # B/ REGISTER PATH in vscode settings path to local binary 'code' local OR path to remote-cli binary 'code' --------------
+    # because we always want to be able to reach vscode cli, and if terminal.integrated.env.linux it overrides global PATH veriable
+    # so we need to explicitly set vscode cli in PATH
+    vscode_path_register_cli_for_vs_terminal
 
-    
-    # B/ binary 'code' local and remote-cli PATH --------------
-    # NOTE : we need at least code binary to launch vscode extension installation
-    #   when "terminal.integrated.env.linux".PATH on remote is empty, vscode remote-cli code path is auto added to PATH variable in terminal
-    #   when "terminal.integrated.env.linux".PATH on remote is defined, vscode remote-cli code path is NOT auto added to PATH variable in terminal
-    #       (the value of "terminal.integrated.inheritEnv" do not change this behavior)
-    #   so we add it manually because this script always set "terminal.integrated.env.linux".PATH which will never be empty anymore
-    
-    # on linux server :
-    # remote-cli code is in $HOME/.vscode-server/cli/servers/Stable-<commit>/server/bin/remote-cli/code
-    # to select the latest vscode version, pick one of these :
-    #       - use $HOME/.vscode-server/cli/servers/lru.json which stores the last used vscode version
-    #       - [MY CHOICE :] filter ls result ordered by date $HOME/.vscode-server/cli/servers/Stable-*
-    #       - filter value of VSCODE_GIT_ASKPASS_NODE env variable setted by the core Git extension 
-    # on WSL linux :
-    # remote cli code is in $HOME/.vscode-server/bin/<commit>/bin/remote-cli/code
+    # C/ specific cli path --------------
+    echo "- configure VS Code : add ${target} PATH to terminal.integrated.env.linux and terminal.integrated.env.osx PATH environment variable "
+    vscode_settings_add_path_for_vs_terminal "${path_to_add}" "ALWAYS_PREPEND"
+    #vscode_settings_add_path_for_vs_terminal "${IATOOLS_NODEJS_BIN_PATH}" "ALWAYS_PREPEND"
+    #vscode_settings_add_path_for_vs_terminal "$(command -v gemini | xargs dirname)" "ALWAYS_PREPEND"
+
+}
+
+vscode_path_unregister_for_vs_terminal() {
+    local target="$1"
+    local path_to_remove="$2"
+    echo "- configure VS Code : remove ${target} PATH from terminal.integrated.env.linux and terminal.integrated.env.osx PATH environment variable "
+    vscode_settings_remove_path_for_vs_terminal "${path_to_remove}" "REMOVE"
+}
+
+
+# ADD vscode cli PATH to local binary 'code' CLI OR path to remote-cli binary 'code'
+#       for vscode integrated terminal
+# on linux server :
+# remote-cli code is in $HOME/.vscode-server/cli/servers/Stable-<commit>/server/bin/remote-cli/code
+# to select the latest vscode version, pick one of these :
+#       - use $HOME/.vscode-server/cli/servers/lru.json which stores the last used vscode version
+#       - [MY CHOICE :] filter ls result ordered by date $HOME/.vscode-server/cli/servers/Stable-*
+#       - filter value of VSCODE_GIT_ASKPASS_NODE env variable setted by the core Git extension 
+# on WSL linux :
+# remote cli code is in $HOME/.vscode-server/bin/<commit>/bin/remote-cli/code
+vscode_path_register_cli_for_vs_terminal() {
     local code_found=0
 
     echo "- configure VS Code : add current PATH to code binary to terminal.integrated.env.linux PATH environment variable"
     if [ -d "$HOME/.vscode-server" ]; then
-        # remote linux server
+        # on remote linux server code cli
         if [ -d "$HOME/.vscode-server/cli/servers" ] && [ "$(ls -A "$HOME/.vscode-server/cli/servers/Stable-"* 2>/dev/null)" ]; then
             vscode_remote_home="$(ls -1dt "$HOME/.vscode-server/cli/servers/Stable-"* | grep -v '/legacy-mode$' | head -n 1 | xargs -I {} echo {}/server)"
             vscode_remote_cli_path="$vscode_remote_home/bin/remote-cli"
 
             if [ -f "${vscode_remote_cli_path}/code" ]; then
                 code_found=1
-                vscode_settings_remove_path "^$HOME/.vscode-server/cli/servers/Stable-.*" "REMOVE_REGEXP"
-                vscode_settings_add_path "$vscode_remote_cli_path" "ALWAYS_PREPEND"
-                echo "- configure VS Code : code found in $vscode_remote_cli_path"
+                vscode_settings_remove_path_for_vs_terminal "^$HOME/.vscode-server/cli/servers/Stable-.*" "REMOVE_REGEXP"
+                vscode_settings_add_path_for_vs_terminal "$vscode_remote_cli_path" "ALWAYS_PREPEND"
+                echo "- configure VS Code : remote-cli code found in $vscode_remote_cli_path"
             fi
         fi
 
@@ -97,60 +133,33 @@ vscode_settings_configure() {
 
                 if [ -f "${vscode_remote_cli_path}/code" ]; then
                     code_found=1
-                    vscode_settings_remove_path "^$HOME/.vscode-server/bin/.*" "REMOVE_REGEXP"
-                    vscode_settings_add_path "$vscode_remote_cli_path" "ALWAYS_PREPEND"
-                    echo "- configure VS Code : code found in $vscode_remote_cli_path"
+                    vscode_settings_remove_path_for_vs_terminal "^$HOME/.vscode-server/bin/.*" "REMOVE_REGEXP"
+                    vscode_settings_add_path_for_vs_terminal "$vscode_remote_cli_path" "ALWAYS_PREPEND"
+                    echo "- configure VS Code : WSL remote-cli code found in $vscode_remote_cli_path"
                 fi
             fi
         fi
 
     else
-        # local binary "code"
+        # local binary "code" cli
         case "$STELLA_CURRENT_PLATFORM" in
-            "linux");; # TODO code binary might not be found
+            "linux")
+                echo "- TODO NOT IMPLEMENTED configure VS Code : linux code found in ------"
+                ;; # TODO code binary might not be found
             "darwin") 
                 vscode_cli_path="/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
                 if [ -f "${vscode_remote_cli_path}/code" ]; then
                     code_found=1
-                    vscode_settings_add_path "$vscode_cli_path" "ALWAYS_PREPEND"
+                    vscode_settings_add_path_for_vs_terminal "$vscode_cli_path" "ALWAYS_PREPEND"
+                    echo "- configure VS Code : darwin code found in $vscode_cli_path"
                 fi
                 ;;
         esac
     fi
 
-
     if [ $code_found -ne 1 ]; then
         echo "- WARN configure VS Code : code binary not detected, it might not been found inside terminal vscode."
     fi
-
-    # C/ specific cli path --------------
-    case "$target" in
-        "gemini" )
-            echo "- configure VS Code : add gemini cli launcher PATH to terminal.integrated.env.linux PATH environment variable "
-            vscode_settings_add_path "${IATOOLS_GEMINI_LAUNCHER_HOME}" "ALWAYS_PREPEND"
-            #vscode_settings_add_path "${IATOOLS_NODEJS_BIN_PATH}" "ALWAYS_PREPEND"
-            #vscode_settings_add_path "$(command -v gemini | xargs dirname)" "ALWAYS_PREPEND"
-        ;;
-        "opencode" )
-            echo "- configure VS Code : add opencode cli launcher PATH to terminal.integrated.env.linux"
-            vscode_settings_add_path "${IATOOLS_OPENCODE_LAUNCHER_HOME}" "ALWAYS_PREPEND"
-            #vscode_settings_add_path "${IATOOLS_NODEJS_BIN_PATH}" "ALWAYS_PREPEND"
-            #vscode_settings_add_path "$(command -v opencode | xargs dirname)" "ALWAYS_PREPEND"
-        ;;
-    esac
-}
-
-vscode_settings_remove() {
-    local target="$1"
-
-    case "$target" in
-        "gemini" )
-           vscode_settings_remove_path "${IATOOLS_GEMINI_LAUNCHER_HOME}" "REMOVE"
-        ;;
-        "opencode" )
-            vscode_settings_remove_path "${IATOOLS_OPENCODE_LAUNCHER_HOME}" "REMOVE"
-        ;;
-    esac
 }
 
 # generic config management -----------------
@@ -176,7 +185,6 @@ vscode_settings_set_http_proxy() {
     vscode_set_config "http\.proxy" "\"$http_proxy\""
 }
 
-
 vscode_settings_remove_http_proxy() {
     vscode_remove_config "http.proxy"
     # vscode_remove_config "https.proxy"
@@ -184,25 +192,27 @@ vscode_settings_remove_http_proxy() {
 }
 
 # path management ------------------------
-vscode_settings_add_path() {
+vscode_settings_add_path_for_vs_terminal() {
     local path_to_add="$1"
     # ALWAYS_PREPEND add path or move it at the beginning position
     # ALWAYS_POSTPEND add path or move it at the end position
     # PREPEND_IF_NOT_EXISTS add path at the beginning position only if not already present
     # POSTPEND_IF_NOT_EXISTS add path at the end position only if not already present
     local mode="${2:-ALWAYS_PREPEND}" 
-    vscode_settings_tweak_path "$path_to_add" "$mode"
+    vscode_settings_tweak_path_for_vs_terminal "$path_to_add" "$mode"
 }
 
-vscode_settings_remove_path() {
+vscode_settings_remove_path_for_vs_terminal() {
     local path_to_remove="$1"
     # REMOVE remove all occurences of a fix expression
     # REMOVE_REGEXP remove all occurences of an regexp expression
     local mode="${2:-REMOVE}"
-    vscode_settings_tweak_path "$path_to_remove" "$mode"
+    vscode_settings_tweak_path_for_vs_terminal "$path_to_remove" "$mode"
 }
 
-vscode_settings_tweak_path() {
+# add PATH variable in vs code settings about integrated terminal
+# by setting PATH env var at each integrated terminal launch
+vscode_settings_tweak_path_for_vs_terminal() {
     local path="$1"
     # ALWAYS_PREPEND add path or move it at the beginning position
     # ALWAYS_POSTPEND add path or move it at the end position
@@ -241,25 +251,3 @@ vscode_settings_tweak_path() {
         fi
 }
 
-# install an alternative sysroot with glibc 2.28
-vscode_server_install_sysroot_228() {
-
-    echo "install requirement : patchelf"
-    $STELLA_API get_feature "patchelf"
-
-    echo "...downloading a linux sysroot with glibc 2.28..."
-    local sysroot_url="https://github.com/microsoft/vscode-linux-build-agent/releases/download/v20260127-398091/x86_64-linux-gnu-glibc-2.28-gcc-10.5.0.tar.gz"
-    $STELLA_API get_resource "sysroot" "$sysroot_url" "HTTP_ZIP" "$STELLA_APP_WORK_ROOT/sysroot228" "DEST_ERASE STRIP"
-
-}
-
-vscode_server_settings_for_sysroot_228() {
-    # path to the dynamic linker (ld-linux.so) in the sysroot (used for --set-interpreter option with patchelf)
-    export VSCODE_SERVER_CUSTOM_GLIBC_LINKER="$STELLA_APP_WORK_ROOT/sysroot228/x86_64-linux-gnu/sysroot/lib/ld-linux-x86-64.so.2"
-    # path to the library locations in the sysroot (used as --set-rpath option with patchelf)
-    export VSCODE_SERVER_CUSTOM_GLIBC_PATH=="$STELLA_APP_WORK_ROOT/sysroot228/x86_64-linux-gnu/sysroot/lib"
-    
-    # path to the patchelf binary on the remote host
-    $STELLA_API feature_info "patchelf" "PATCHELF"
-    export VSCODE_SERVER_PATCHELF_PATH="$PATCHELF_FEAT_INSTALL_ROOT/bin/patchelf"
-}
