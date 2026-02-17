@@ -65,9 +65,10 @@ An open-source AI agent that brings the power of Gemini directly into your termi
 * **Website**: [google-gemini.github.io/gemini-cli](https://google-gemini.github.io/gemini-cli)
 * **Source**: [github.com/google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli)
 * **IDE Integration**: 
-  * When you run Gemini CLI inside a supported editor, it will automatically detect your environment and prompt you to connect.
+  * When you run Gemini CLI inside a supported editor, it will automatically detect your environment and prompt you to install Gemini Cli Companion.
   * Manual installation : use `/ide install` - if you install vscode extension with /ide install and have problem, just close and relaunch vscode
   * Other Manual Installation : https://marketplace.visualstudio.com/items?itemName=Google.gemini-cli-vscode-ide-companion
+  * NOTE : to install Gemini Cli Companion, vscode cli must be in the PATH
 
 
 *NOTES*
@@ -92,7 +93,7 @@ An open-source AI agent that brings the power of Gemini directly into your termi
 
 An AI coding agent built for the terminal.
 * **Website**: [opencode.ai](https://opencode.ai)
-* **Source**: [github.com/sst/opencode](https://github.com/sst/opencode)
+* **Source**: [github.com/anomalyco/opencode](https://github.com/anomalyco/opencode)
 * **IDE Integration**: Integrates with VS Code, Cursor, and other IDEs by running `opencode` in the integrated terminal.
 
 *NOTES*
