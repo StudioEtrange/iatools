@@ -1,7 +1,7 @@
 
 
 vscode_path() {
-    local target="${1:-current}"
+    local target="${1:-guess}"
 
     # this test works on linux AND wsl AND on every other system
     [ "$TERM_PROGRAM" = "vscode" ] && echo "We are running inside a VS Code terminal"
@@ -10,8 +10,18 @@ vscode_path() {
     [ ! -z "$VSCODE_IPC_HOOK_CLI" ] && echo "We are using VS Code remote extension (SSH, WSL, ...)"
 
     # vscode pecific paths
-    if [ "$target" = "current" ]; then
-        [ -n "$VSCODE_IPC_HOOK_CLI" ] && target="remote" || target="local"
+    if [ "$target" = "guess" ]; then
+        # we are inside a vs code remote ssh connection, so target is "remote"
+        if [ -n "$VSCODE_IPC_HOOK_CLI" ]; then
+            target="remote"
+        else
+            # a vscode server is installed on the host, so target is "remote"
+            if [ -d "$HOME/.vscode-server/bin" ] && [ "$(ls -A "$HOME/.vscode-server/bin/"* 2>/dev/null)" ]; then
+                target="remote"
+            else
+                target="local"
+            fi
+        fi
     fi
 
     case "$target" in
@@ -99,26 +109,26 @@ vscode_path_unregister_for_vs_terminal() {
 # ADD vscode cli PATH to local binary 'code' CLI OR path to remote-cli binary 'code'
 #       for vscode integrated terminal
 # on linux server :
-# remote-cli code is in $HOME/.vscode-server/cli/servers/Stable-<commit>/server/bin/remote-cli/code
+#   remote-cli code is in $HOME/.vscode-server/bin/<commit>/bin/remote-cli/code
 # to select the latest vscode version, pick one of these :
 #       - use $HOME/.vscode-server/cli/servers/lru.json which stores the last used vscode version
 #       - [MY CHOICE :] filter ls result ordered by date $HOME/.vscode-server/cli/servers/Stable-*
 #       - filter value of VSCODE_GIT_ASKPASS_NODE env variable setted by the core Git extension 
 # on WSL linux :
-# remote cli code is in $HOME/.vscode-server/bin/<commit>/bin/remote-cli/code
+#   remote cli code is in $HOME/.vscode-server/bin/<commit>/bin/remote-cli/code
 vscode_path_register_cli_for_vs_terminal() {
     local code_found=0
 
     echo "- configure VS Code : add current PATH to code binary to terminal.integrated.env.linux PATH environment variable"
     if [ -d "$HOME/.vscode-server" ]; then
         # on remote linux server code cli
-        if [ -d "$HOME/.vscode-server/cli/servers" ] && [ "$(ls -A "$HOME/.vscode-server/cli/servers/Stable-"* 2>/dev/null)" ]; then
-            vscode_remote_home="$(ls -1dt "$HOME/.vscode-server/cli/servers/Stable-"* | grep -v '/legacy-mode$' | head -n 1 | xargs -I {} echo {}/server)"
+        if [ -d "$HOME/.vscode-server/bin" ] && [ "$(ls -A "$HOME/.vscode-server/bin/"* 2>/dev/null)" ]; then
+            vscode_remote_home="$(ls -1dt "$HOME/.vscode-server/bin/"* | grep -v '/legacy-mode$' | head -n 1 | xargs -I {} echo {})"
             vscode_remote_cli_path="$vscode_remote_home/bin/remote-cli"
 
             if [ -f "${vscode_remote_cli_path}/code" ]; then
                 code_found=1
-                vscode_settings_remove_path_for_vs_terminal "^$HOME/.vscode-server/cli/servers/Stable-.*" "REMOVE_REGEXP"
+                vscode_settings_remove_path_for_vs_terminal "^$HOME/.vscode-server/bin/.*" "REMOVE_REGEXP"
                 vscode_settings_add_path_for_vs_terminal "$vscode_remote_cli_path" "ALWAYS_PREPEND"
                 echo "- configure VS Code : remote-cli code found in $vscode_remote_cli_path"
             fi
