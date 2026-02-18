@@ -4,6 +4,7 @@ set -eu
 
 # --- Config ---
 VSCODE_SERVER_ROOT="${HOME}/.vscode-server"
+VSCODE_SERVER_PATCH_ROOT="${VSCODE_SERVER_ROOT}-patch"
 EXPECTED_INTERPRETER="${VSCODE_SERVER_CUSTOM_GLIBC_LINKER:-/opt/custom-glibc228-runtime/lib/ld-linux-x86-64.so.2}"
 EXPECTED_RPATH="${VSCODE_SERVER_CUSTOM_GLIBC_PATH:-/opt/custom-glibc228-runtime/lib:/opt/custom-glibc228-runtime/rtlib}"
 SCRIPT_FOLDER="$(cd -- "$(dirname -- "$0")" && pwd)"
@@ -17,8 +18,8 @@ SSH_RC="$HOME/.ssh/rc"
 
 install_patchelf() {
 	echo "install patchelf"
-	mkdir -p "$VSCODE_SERVER_ROOT/patchelf"
-	cd "$VSCODE_SERVER_ROOT/patchelf"
+	mkdir -p "$VSCODE_SERVER_PATCH_ROOT/patchelf"
+	cd "$VSCODE_SERVER_PATCH_ROOT/patchelf"
 	rm -f "patchelf-0.18.0-x86_64.tar.gz"
 	wget --no-check-certificate "https://github.com/NixOS/patchelf/releases/download/0.18.0/patchelf-0.18.0-x86_64.tar.gz" || return 1
 	tar -zxvf "patchelf-0.18.0-x86_64.tar.gz" 1>/dev/null || return 1
@@ -30,8 +31,8 @@ install_patchelf() {
 case "$ACTION" in
 	"install")
 		# install patchelf
-		PATCHELF="$VSCODE_SERVER_ROOT/patchelf/bin/patchelf"
-		PATH="$VSCODE_SERVER_ROOT/patchelf/bin:$PATH"
+		PATCHELF="$VSCODE_SERVER_PATCH_ROOT/patchelf/bin/patchelf"
+		PATH="$VSCODE_SERVER_PATCH_ROOT/patchelf/bin:$PATH"
 		if [ -x "$PATCHELF" ]; then
     			echo "patchelf is already installed"
 		else
@@ -55,8 +56,8 @@ case "$ACTION" in
 		if ! grep -Fq "$BEGIN_MARK" "$SSH_RC"; then
     		{
 				echo "$BEGIN_MARK"
-				echo "mkdir -p \"$HOME/.vscode-server-patch\" >/dev/null 2>&1 || true"
-				echo "\"$SCRIPT_FOLDER/vscode-server-patch.sh\" 1>\"$HOME/.vscode-server-patch/patch.log\" 2>&1 || true"
+				echo "mkdir -p \"$VSCODE_SERVER_PATCH_ROOT\" 1>/dev/null 2>&1 || true"
+				echo "\"$SCRIPT_FOLDER/vscode-server-patch.sh\" 1>\"$VSCODE_SERVER_PATCH_ROOT/patch.log\" 2>&1 || true"
 				echo "$END_MARK" 
 			} >> "$SSH_RC"
 		fi
