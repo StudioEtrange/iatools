@@ -122,7 +122,7 @@ cpa_settings_management_api_key_reset() {
 cpa_settings_management_api_key_create() {
     local key="$($STELLA_API generate_password 12 "[:alnum:]")"
     cpa_settings_management_api_key_set "$key"
-    echo "New management API key created"
+    echo "New management API key created : $key"
     echo "WARN : management API key is hashed in config file, so save it now"
 }
 

@@ -18,6 +18,8 @@ case "$sub_command" in
         $STELLA_API feature_remove "cliproxyapi" "NON_DECLARED"
 
         cpa_launcher_manage
+        # clean running process
+        process_kill_by_port "8317"
         ;;
     configure)
         echo "Configuring CLIProxyAPI"
