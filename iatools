@@ -77,6 +77,8 @@ Options:
     ----
     npm-config set <key> <value>    Set a npm configuration for the internal nodejs.
     ----
+    app killport <port>                Kill process running on a specific port.
+    ----
 EOF
 }
 
@@ -126,6 +128,27 @@ main() {
                     ;;
                 *)
                     echo "Error: Unknown command $sub_command for npm-config"
+                    usage
+                    exit 1
+                    ;;
+            esac
+            ;;
+        app)
+            local sub_command="$1"
+            shift
+            case "$sub_command" in
+                killport)
+                    local port="$1"
+                    shift
+                    if [ -z "$port" ]; then
+                        echo " -- ERROR : Missing port for app killport"
+                        usage
+                        exit 1
+                    fi
+                    process_kill_by_port "$port"
+                    ;;
+                *)
+                    echo "Error: Unknown command $sub_command for app"
                     usage
                     exit 1
                     ;;

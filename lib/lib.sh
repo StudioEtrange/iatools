@@ -259,3 +259,33 @@ require() {
             ;;
     esac
 }
+
+
+process_kill_by_port() {
+    local port="$1"
+    local pid
+
+    if command -v lsof >/dev/null 2>&1; then
+        pid=$(lsof -t -i:"$port" 2>/dev/null)
+        if $? -ne 0; then
+            pid=""
+        fi
+    fi
+    if [ "$pid" = "" ]; then
+        if command -v netstat >/dev/null 2>&1; then
+            # WARN to get PID or process name with netstat, we need to be root user
+            pid=$(netstat -ltnp 2>/dev/null | awk -v port=":$port$" '$4 ~ port {split($7, a, "/"); print a[1]; exit}')
+        fi
+    fi
+
+    if [ -n "$pid" ]; then
+        # lsof can return multiple PIDs (as a newline-separated string), so we loop
+        for p in $pid; do
+            echo "Killing process on port $port with PID $p"
+            kill -9 "$p"
+        done
+    else
+        echo "Error: lsof nor netstat able to find process."
+        return 1
+    fi
+}
