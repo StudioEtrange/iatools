@@ -22,11 +22,12 @@ launch
 ./iatools cpa launch
 ```
 
-authenticate to gemini cli --
+authenticate to gemini cli
 requirements : gemini-cli configured `./iatools gc install`
 ```
 ./iatools cpa launch -- --login --no-browser [--project_id <your_project_id>]
 ```
+
 
 info
 ```
@@ -59,7 +60,28 @@ curl -X POST http://localhost:8317/v1/chat/completions \
     }'
 ```
 
-## Connect  KiloCode VS Code extension 
+## Gemini OAuth and special case when using remote SSH in vscode 
+
+You will have to use the web browser of your current host to auth to gemini. And launch a local port forwarding with ssh to establish a tunnel
+
+On your current host, where run your vscode desktop, use a ssh client and launch `ssh -L 127.0.0.1:8085:127.0.0.1:8085 root@xxx.xxx.xxx.xxx -p 22`.
+
+- Launch `ssh -L 127.0.0.1:8085:127.0.0.1:8085 remote_ssh_user@remote_ssh_host -p remote_ssh_port`
+- Then `./iatools cpa launch -- --login --no-browser`
+- Then open the browser by following the link to auth
+
+Instead ssh command you can use the "forward port" functionnality in vscode :
+
+* Ports/Add port :
+    * Port : localhost:8085
+    * Change Local Adress Port : 8085
+    * remote_ssh_host:remote_ssh_port is the SSH address you are currently connected through VS Code remote SSH
+
+
+About SSH port forwarding : https://gist.github.com/StudioEtrange/d10c0b4f17a60b219e0b5722968d5b8c
+
+
+## Connect KiloCode VS Code extension 
   
 * In KiloCode extension settings
   * API Provider : OpenAI Compatible
