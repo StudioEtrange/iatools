@@ -110,7 +110,6 @@ path_register_for_shell() {
     local name="$1"
     local shell_name="$2"
     local path_to_add="$3"
-    local set_path_now="${4:-false}"
 
     local rc_file
 
