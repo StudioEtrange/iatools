@@ -19,7 +19,7 @@ case "$sub_command" in
 
         cpa_launcher_manage
         # clean running process
-        process_kill_by_port "8317"
+        process_kill_by_port "8317" 1>/dev/null 2>&1
         ;;
     configure)
         echo "Configuring CLIProxyAPI"
