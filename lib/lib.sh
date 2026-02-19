@@ -43,49 +43,63 @@ runtime_path() {
 
 }
 
+iatools_install_dependency() {
+    local dep="$1"
 
+    case "$dep" in
+        yq*)
+            # internal dependencies for iatools (which will be added to iatools PATH while running)
+            $STELLA_API get_feature "yq"
+            ;;
+        jq*)
+            # internal dependencies for iatools (which will be added to iatools PATH while running)
+            $STELLA_API get_feature "jq"
+            ;;
+        patchelf*|cliproxyapi*);;
+        nodejs)
+            # other dependencies (for mcp servers and other commands) in an isolated way. (None of those will never been added to any PATH)
+            if [ "$STELLA_CURRENT_PLATFORM" = "linux" ]; then
+                if [ "$STELLA_CURRENT_CPU_FAMILY" = "intel" ]; then
+                    _ldd_version="$(ldd --version 2>/dev/null | awk '/ldd/{print $NF}')"
+                    if [ "${_ldd_version}" = "2.17" ]; then
+                        dep="nodejs#23_7_0_glibc_217"
+                        echo "-- detected glibc 2.17 switch to nodejs special build for it"
+                    fi
+                fi
+            fi
+        # this notation do not stop case statement workflow and continue to next pattern without testing any match
+        ;&
+        *)
+            # other dependencies (for mcp servers and other commands) in an isolated way. (None of those will never been added to any PATH)
+            _feature=""
+            _feature_name=""
+
+            $STELLA_API select_official_schema "$dep" "_feature" "_feature_name"
+            if [ ! "$_feature" = "" ]; then
+                echo "-- install $_feature"
+                mkdir -p "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/${_feature_name}"
+                $STELLA_API feature_install "$dep" "EXPORT ${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/${_feature_name}"
+            else
+                echo "!! WARN : $dep is not a valid feature for stella framework"
+            fi
+        # this notation do not stop case statement workflow and continue to next pattern by testing next pattern
+        ;;&
+        miniforge3)
+            echo "-- install python pipx and uv package/project manager"
+            ${IATOOLS_PYTHON_BIN_PATH}mamba install -y pipx uv
+        ;;
+    esac
+}
 
 iatools_install_dependencies() {
 
     echo "- Install internal dependencies for iatools (which will be added to iatools PATH while running)"
-    $STELLA_API get_feature "jq"
-    $STELLA_API get_feature "yq"
+    iatools_install_dependency "jq"
+    iatools_install_dependency "yq"
 
     echo "- Install other dependencies (for mcp servers and other commands) in an isolated way. (None of those will never been added to any PATH)"
     for f in $STELLA_APP_FEATURE_LIST; do
-        case "$f" in
-            yq*|jq*|patchelf*|cliproxyapi*);;
-            nodejs)
-                if [ "$STELLA_CURRENT_PLATFORM" = "linux" ]; then
-                    if [ "$STELLA_CURRENT_CPU_FAMILY" = "intel" ]; then
-                        _ldd_version="$(ldd --version 2>/dev/null | awk '/ldd/{print $NF}')"
-                        if [ "${_ldd_version}" = "2.17" ]; then
-                            f="nodejs#23_7_0_glibc_217"
-                            echo "-- detected glibc 2.17 switch to nodejs special build for it"
-                        fi
-                    fi
-                fi
-            # this notation do not stop case statement workflow and continue to next pattern without testing any match
-            ;&
-            *)
-                _feature=""
-                _feature_name=""
-
-                $STELLA_API select_official_schema "$f" "_feature" "_feature_name"
-                if [ ! "$_feature" = "" ]; then
-                    echo "-- install $_feature"
-                    mkdir -p "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/${_feature_name}"
-                    $STELLA_API feature_install "$f" "EXPORT ${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/${_feature_name}"
-                else
-                    echo "!! WARN : $f is not a valid feature for stella framework"
-                fi
-            # this notation do not stop case statement workflow and continue to next pattern by testing next pattern
-            ;;&
-            miniforge3)
-                echo "-- install python pipx and uv package/project manager"
-                ${IATOOLS_PYTHON_BIN_PATH}mamba install -y pipx uv
-            ;;
-        esac
+        iatools_install_dependency "$f"
     done
 }
 

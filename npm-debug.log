@@ -1,0 +1,26 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/local/bin/node',
+1 verbose cli   '/usr/local/bin/npm',
+1 verbose cli   '--https-proxy=http://pac-ldaps.proxy.edf.fr:3128',
+1 verbose cli   '--proxy=http://pac-ldaps.proxy.edf.fr:3128',
+1 verbose cli   'config',
+1 verbose cli   'set',
+1 verbose cli   'registry',
+1 verbose cli   'https://si-devops-mirror.edf.fr/repository/registry.npmjs.org',
+1 verbose cli   '-g' ]
+2 info using npm@1.4.21
+3 info using node@v0.10.30
+4 info config set "registry" "https://si-devops-mirror.edf.fr/repository/registry.npmjs.org"
+5 error Error: EPERM, chmod '/usr/local/etc/npmrc'
+5 error  { [Error: EPERM, chmod '/usr/local/etc/npmrc'] errno: 50, code: 'EPERM', path: '/usr/local/etc/npmrc' }
+6 error Please try running this command again as root/Administrator.
+7 error System Linux 3.10.0-1160.133.1.el7.x86_64
+8 error command "/usr/local/bin/node" "/usr/local/bin/npm" "--https-proxy=http://pac-ldaps.proxy.edf.fr:3128" "--proxy=http://pac-ldaps.proxy.edf.fr:3128" "config" "set" "registry" "https://si-devops-mirror.edf.fr/repository/registry.npmjs.org" "-g"
+9 error cwd /home/SB03629S/workspace/iatools
+10 error node -v v0.10.30
+11 error npm -v 1.4.21
+12 error path /usr/local/etc/npmrc
+13 error code EPERM
+14 error errno 50
+15 error stack Error: EPERM, chmod '/usr/local/etc/npmrc'
+16 verbose exit [ 50, true ]
