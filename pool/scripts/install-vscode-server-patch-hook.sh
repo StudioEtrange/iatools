@@ -4,9 +4,13 @@ set -eu
 
 # --- Config ---
 VSCODE_SERVER_ROOT="${HOME}/.vscode-server"
-VSCODE_SERVER_PATCH_ROOT="${VSCODE_SERVER_ROOT}-patch"
-EXPECTED_INTERPRETER="${VSCODE_SERVER_CUSTOM_GLIBC_LINKER:-/opt/custom-glibc228-runtime/lib/ld-linux-x86-64.so.2}"
-EXPECTED_RPATH="${VSCODE_SERVER_CUSTOM_GLIBC_PATH:-/opt/custom-glibc228-runtime/lib:/opt/custom-glibc228-runtime/rtlib}"
+
+
+# define VSCODE_SERVER_CUSTOM_GLIBC_LINKER and VSCODE_SERVER_CUSTOM_GLIBC_PATH to select a custom runtime to use with vscode server
+CUSTOM_GLIBC_LINKER="${VSCODE_SERVER_CUSTOM_GLIBC_LINKER:-/opt/custom-glibc228-runtime/lib/ld-linux-x86-64.so.2}"
+CUSTOM_GLIBC_PATH="${VSCODE_SERVER_CUSTOM_GLIBC_PATH:-/opt/custom-glibc228-runtime/lib:/opt/custom-glibc228-runtime/rtlib}"
+
+PATCH_WORKSPACE="$HOME/.patch-workspace/$(basename "${VSCODE_SERVER_ROOT}")"
 SCRIPT_FOLDER="$(cd -- "$(dirname -- "$0")" && pwd)"
 
 ACTION="${1:-install}"
@@ -18,8 +22,8 @@ SSH_RC="$HOME/.ssh/rc"
 
 install_patchelf() {
 	echo "install patchelf"
-	mkdir -p "$VSCODE_SERVER_PATCH_ROOT/patchelf"
-	cd "$VSCODE_SERVER_PATCH_ROOT/patchelf"
+	mkdir -p "$PATCH_WORKSPACE/patchelf"
+	cd "$PATCH_WORKSPACE/patchelf"
 	rm -f "patchelf-0.18.0-x86_64.tar.gz"
 	wget --no-check-certificate "https://github.com/NixOS/patchelf/releases/download/0.18.0/patchelf-0.18.0-x86_64.tar.gz" || return 1
 	tar -zxvf "patchelf-0.18.0-x86_64.tar.gz" 1>/dev/null || return 1
@@ -27,12 +31,23 @@ install_patchelf() {
 }
 
 
+uninstall_hook_in_rc() {
+	if [ -f "$SSH_RC" ]; then
+		tmp_file="$(mktemp)"
+		awk -v begin="$BEGIN_MARK" -v end="$END_MARK" ' 
+			$0 == begin { skip=1; next } 
+			$0 == end { skip=0; next } !skip 
+		' "$SSH_RC" > "$tmp_file" && mv "$tmp_file" "$SSH_RC"
+		rm -f "$tmp_file"
+	fi
+}
+
 
 case "$ACTION" in
 	"install")
 		# install patchelf
-		PATCHELF="$VSCODE_SERVER_PATCH_ROOT/patchelf/bin/patchelf"
-		PATH="$VSCODE_SERVER_PATCH_ROOT/patchelf/bin:$PATH"
+		PATCHELF="$PATCH_WORKSPACE/patchelf/bin/patchelf"
+		PATH="$PATCH_WORKSPACE/patchelf/bin:$PATH"
 		if [ -x "$PATCHELF" ]; then
     			echo "patchelf is already installed"
 		else
@@ -51,13 +66,17 @@ case "$ACTION" in
 		touch /tmp/vscode-skip-server-requirements-check
 
 		echo "install vs code patch system hook in $HOME/.ssh/rc file"
+		uninstall_hook_in_rc
+
 		[ -d "$HOME/.ssh" ] || { mkdir -p "$HOME/.ssh"; chmod 700 "$HOME/.ssh"; }
 		[ -f "$SSH_RC" ] || { touch "$SSH_RC"; chmod 600 "$SSH_RC"; }
 		if ! grep -Fq "$BEGIN_MARK" "$SSH_RC"; then
     		{
 				echo "$BEGIN_MARK"
-				echo "mkdir -p \"$VSCODE_SERVER_PATCH_ROOT\" 1>/dev/null 2>&1 || true"
-				echo "\"$SCRIPT_FOLDER/vscode-server-patch.sh\" 1>\"$VSCODE_SERVER_PATCH_ROOT/patch.log\" 2>&1 || true"
+				echo "export CUSTOM_GLIBC_LINKER=\"$CUSTOM_GLIBC_LINKER\""
+				echo "export CUSTOM_GLIBC_PATH=\"$CUSTOM_GLIBC_PATH\""
+				echo "mkdir -p \"$PATCH_WORKSPACE\" 1>/dev/null 2>&1 || true"
+				echo "\"$SCRIPT_FOLDER/patch-with-custom-glibc.sh\" \"node\" \"$VSCODE_SERVER_ROOT\" 1>\"$PATCH_WORKSPACE/patch.log\" 2>&1 || true"
 				echo "$END_MARK" 
 			} >> "$SSH_RC"
 		fi
@@ -68,14 +87,8 @@ case "$ACTION" in
 	"uninstall")
 		rm -f /tmp/vscode-skip-server-requirements-check
 
-		if [ -f "$SSH_RC" ]; then
-			tmp_file="$(mktemp)"
-			awk -v begin="$BEGIN_MARK" -v end="$END_MARK" ' 
-				$0 == begin { skip=1; next } 
-				$0 == end { skip=0; next } !skip 
-			' "$SSH_RC" > "$tmp_file" && mv "$tmp_file" "$SSH_RC"
-			rm -f "$tmp_file"
-		fi
+		uninstall_hook_in_rc
+		
 		
 		echo "uninstallation done"
 		;;	

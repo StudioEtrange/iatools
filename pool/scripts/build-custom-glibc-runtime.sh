@@ -7,7 +7,7 @@ _CURRENT_RUNNING_DIR="$( cd "$( dirname "." )" && pwd )"
 # You could use this script directly on a host
 # Sample usage on a host to install in $HOME/custom-glibc228-runtime
 # 	export NB_PROC="AUTO"
-# 	./build-glibc.sh "$HOME/custom-glibc228-runtime"
+# 	./build-custom-glibc-runtime.sh "$HOME/custom-glibc228-runtime"
 #
 # To use it in a container you could use distrobox, to run this script inside it
 # 	distrobox rm buildenv --yes
