@@ -100,13 +100,16 @@ fi
 # find binary
 echo "try to find $BINARY_TO_PATCH in $FOLDER_TO_PATCH_ROOT"
 
-find "$FOLDER_TO_PATCH_ROOT" -type f -executable -size +0c -name "$BINARY_TO_PATCH" -print0 L
+find "$FOLDER_TO_PATCH_ROOT" -type f -executable -size +0c -name "$BINARY_TO_PATCH" -print0 |
 while IFS= read -r -d '' f; do
     echo "found $f"
     commit_dir="$(dirname "$f")"
     stamp="$commit_dir/.patched"
     # already patched
-    [ -f "$stamp" ] && continue
+    if [ -f "$stamp" ]; then
+	echo "already patched"
+	continue
+    fi
     if patch "$f"; then
         touch "$stamp" 2>/dev/null || true
     fi

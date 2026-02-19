@@ -63,7 +63,7 @@ case "$ACTION" in
 		fi
 
 		echo "disable vs code server requirements check"
-		if [ ! -f "/tmp/vscode-skip-server-requirements-check" ], then
+		if [ ! -f "/tmp/vscode-skip-server-requirements-check" ]; then
 			touch /tmp/vscode-skip-server-requirements-check || true
 			chmod 777 /tmp/vscode-skip-server-requirements-check
 		fi
@@ -88,7 +88,7 @@ case "$ACTION" in
 		;;
 
 	"uninstall")
-		if [ ! -f "/tmp/vscode-skip-server-requirements-check" ], then
+		if [ ! -f "/tmp/vscode-skip-server-requirements-check" ]; then
 			rm -f /tmp/vscode-skip-server-requirements-check || true
 		fi
 
