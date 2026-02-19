@@ -57,7 +57,8 @@ Options:
     oc mcp github install|uninstall             Add mcp-github remote server configuration.
     oc mcp context7 install|uninstall           Add mcp-context7 local server configuration.
     ----
-    vs set <key> <value>               Set a VS Code configuration in settings file.
+    vs set <key> <value>                Set a VS Code configuration in settings file.
+    vs del <key>                        Delete a VS Code configuration in settings file.
     vs show-config                      Show current VSCode configuration.
     ----
     cpa : CLIProxyAPI - https://github.com/router-for-me/CLIProxyAPI

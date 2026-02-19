@@ -5,6 +5,9 @@ case "$sub_command" in
     set)
         vscode_set_config "$1" "$2"
         ;;
+    del)
+        vscode_remove_config "$1"
+        ;;
     show-config)
          if [ -f "$IATOOLS_VSCODE_CONFIG_FILE" ]; then
             echo "Current VSCode configuration file : $IATOOLS_VSCODE_CONFIG_FILE"
