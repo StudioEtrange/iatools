@@ -3,11 +3,20 @@
 vscode_path() {
     local target="${1:-guess}"
 
-    # this test works on linux AND wsl AND on every other system
+    # this test works on linux AND wsl AND on coder web AND on every other system
     #[ "$TERM_PROGRAM" = "vscode" ] && echo "We are running inside a VS Code terminal"
 
-    # this test works remote ssh on linux AND on local wsl
+    # this test works remote ssh on linux AND on local wsl AND on coder web
     #[ -n "$VSCODE_IPC_HOOK_CLI" ] && echo "We are using VS Code remote extension (SSH, WSL, ...)"
+
+    for t in target; do
+        case "$t" in
+            "remote")
+                ;;
+            "local")
+                ;;
+        esac
+    done
 
     # root folder for all vs code server files
     IATOOLS_VSCODE_SERVER_HOME="$HOME/.vscode-server"
@@ -59,10 +68,16 @@ vscode_path() {
                 # https://code.visualstudio.com/docs/configure/settings
                 #   Windows %APPDATA%\Code\User\settings.json
                 #   macOS $HOME/Library/Application\ Support/Code/User/settings.json
-                #   Linux $HOME/.config/Code/User/settings.json
+                #   Linux $HOME/.config/Codee/User/settings.json
+                #   only coder (web) linux ?  $HOME/.vscode/User/settings.json
                 case "$STELLA_CURRENT_PLATFORM" in
-                    "linux") export IATOOLS_VSCODE_CONFIG_FILE="$HOME/.config/Code/User/settings.json";;
-                    "darwin") export IATOOLS_VSCODE_CONFIG_FILE="$HOME/Library/Application Support/Code/User/settings.json";;
+                    "linux") 
+                        [ -d "$HOME/.vscode/User" ] && export IATOOLS_VSCODE_CONFIG_FILE="$HOME/.vscode/User/settings.json"
+                        [ -d "$HOME/.config/Code/User" ] && export IATOOLS_VSCODE_CONFIG_FILE="$HOME/.config/Code/User/settings.json"
+                        ;;
+                    "darwin") 
+                        [ -d "$HOME/Library/Application Support/Code/User" ] && export IATOOLS_VSCODE_CONFIG_FILE="$HOME/Library/Application Support/Code/User/settings.json"
+                        ;;
                 esac
                 ;;
             *)
@@ -210,8 +225,7 @@ vscode_settings_set_http_proxy() {
 
 vscode_settings_remove_http_proxy() {
     vscode_remove_config "http\.proxy"
-    # vscode_remove_config "https.proxy"
-    #vscode_remove_config "http.noProxy"
+    #vscode_remove_config "http\.noProxy"
 }
 
 # path management ------------------------
