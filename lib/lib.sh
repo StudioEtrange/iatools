@@ -26,7 +26,7 @@ runtime_path() {
 
     # NOTE : we do not permanently add runtime paths (nodejs, python, ...)  to current system path to not override eventually existing runtime
     # used by gemini, opencode and several MCP local server
-    if check_requirements "nodejs" "VERBOSE"; then
+    if check_requirements "nodejs"; then
         export IATOOLS_NODEJS_BIN_PATH="${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/nodejs/bin/"
     else
         # we use an already installed nodejs, not iatools nodejs
@@ -34,7 +34,7 @@ runtime_path() {
     fi
     
     # used by MCP local server
-    if check_requirements "python" "VERBOSE"; then
+    if check_requirements "python"; then
         export IATOOLS_PYTHON_BIN_PATH="${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}/miniforge3/bin/"
     else
         # we use an already installed python, not iatools python
