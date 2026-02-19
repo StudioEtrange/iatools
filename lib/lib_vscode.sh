@@ -4,10 +4,10 @@ vscode_path() {
     local target="${1:-guess}"
 
     # this test works on linux AND wsl AND on every other system
-    [ "$TERM_PROGRAM" = "vscode" ] && echo "We are running inside a VS Code terminal"
+    #[ "$TERM_PROGRAM" = "vscode" ] && echo "We are running inside a VS Code terminal"
 
     # this test works remote ssh on linux AND on local wsl
-    [ -n "$VSCODE_IPC_HOOK_CLI" ] && echo "We are using VS Code remote extension (SSH, WSL, ...)"
+    #[ -n "$VSCODE_IPC_HOOK_CLI" ] && echo "We are using VS Code remote extension (SSH, WSL, ...)"
 
     # root folder for all vs code server files
     IATOOLS_VSCODE_SERVER_HOME="$HOME/.vscode-server"
