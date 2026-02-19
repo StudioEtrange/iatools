@@ -98,8 +98,11 @@ if [ ! -f "${EXPECTED_INTERPRETER}" ]; then
 fi
 
 # find binary
-find "$FOLDER_TO_PATCH_ROOT" -type f -executable -size +0c -name $BINARY_TO_PATCH -print0 |
+echo "try to find $BINARY_TO_PATCH in $FOLDER_TO_PATCH_ROOT"
+
+find "$FOLDER_TO_PATCH_ROOT" -type f -executable -size +0c -name "$BINARY_TO_PATCH" -print0 L
 while IFS= read -r -d '' f; do
+    echo "found $f"
     commit_dir="$(dirname "$f")"
     stamp="$commit_dir/.patched"
     # already patched
