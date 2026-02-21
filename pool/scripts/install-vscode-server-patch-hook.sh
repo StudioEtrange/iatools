@@ -58,12 +58,15 @@ case "$ACTION" in
 		fi
 		# check patchelf exists and is executable
 		if ! command -v "patchelf" >/dev/null 2>&1; then
-    			echo "ERROR: patchelf not found" >&2
-    			exit 1
+			echo "ERROR: patchelf not found" >&2
+			exit 1
 		fi
 
 		echo "disable vs code server requirements check"
-		touch /tmp/vscode-skip-server-requirements-check
+		if [ ! -f "/tmp/vscode-skip-server-requirements-check" ]; then
+			touch /tmp/vscode-skip-server-requirements-check || true
+			chmod 777 /tmp/vscode-skip-server-requirements-check
+		fi
 
 		echo "install vs code patch system hook in $HOME/.ssh/rc file"
 		uninstall_hook_in_rc
@@ -85,7 +88,9 @@ case "$ACTION" in
 		;;
 
 	"uninstall")
-		rm -f /tmp/vscode-skip-server-requirements-check
+		if [ ! -f "/tmp/vscode-skip-server-requirements-check" ]; then
+			rm -f /tmp/vscode-skip-server-requirements-check || true
+		fi
 
 		uninstall_hook_in_rc
 		
