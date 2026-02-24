@@ -68,7 +68,7 @@ Options:
     cpa info                             Print CLIProxyAPI informations.
     cpa show-config                      Show current CLIProxyAPI configuration.
     cpa reset                            Reset all CLIProxyAPI configuration.
-    cpa launch -- <other CLIProxyAPI options>                   Launch CLIProxyAPI.
+    cpa launch [context folder] -- <other CLIProxyAPI options>                   Launch CLIProxyAPI.
     cpa set <key> <value> ["string"]     Set a CLIProxyAPI key in setting file. (i.e: cpa set port 8000) Use optionnal "string" option value is a string.
     cpa get <key>                        Get a CLIProxyAPI key from setting file. (i.e: cpa get api-key.0)
     cpa key generate                     Generate a new API key for CLIProxyAPI and add it to the configuration.

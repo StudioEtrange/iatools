@@ -27,7 +27,8 @@ requirements : gemini-cli configured `./iatools gc install`
 ```
 ./iatools cpa launch -- --login --no-browser [--project_id <your_project_id>]
 ```
-
+choose google one to usee free tier with google personnal account
+alternative : go to http://localhost:8317/management.html go to OAuth login / Gemini CLI OAuth
 
 info
 ```

@@ -41,4 +41,6 @@ An open-source AI agent that brings the power of Gemini directly into your termi
 * gemini-cli sandboxing : 
   * Command flag: -s or --sandbox
   * Environment variable: GEMINI_SANDBOX=true|docker|podman|sandbox-exec
-  * Settings file: "sandbox": true in the tools object of your settings.json file (e.g., {"tools": {"sandbox": true}}).
+  * Settings file: "sandbox": true in the tools object of your settings.json file (e.g., {"tools": {"sandbox": true}})
+* License usage for gemini 
+  * https://geminicli.com/docs/get-started/authentication/

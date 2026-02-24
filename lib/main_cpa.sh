@@ -81,11 +81,13 @@ case "$sub_command" in
     launch)
         cpa_launcher_manage
 
+        local folder=
         local list_args=()
         local dash_found=0
         case "$1" in
             "--" | "");;
             *)
+                folder="$1"
                 shift
                 ;;
         esac
@@ -99,7 +101,15 @@ case "$sub_command" in
                 dash_found=1
             fi
         done
-       
+        if [ -n "$folder" ]; then
+            if [ -d "$folder" ]; then
+                echo "change to context folder : $folder"
+                cd "$folder"
+            else
+                echo "Error: Directory '$folder' not found"
+                exit 1
+            fi
+        fi
         if [ ${#list_args[@]} -gt 0 ]; then
             cli-proxy-api "${list_args[@]}"
         else

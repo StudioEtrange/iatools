@@ -101,6 +101,7 @@ case "$sub_command" in
         done
         if [ ! -z "$folder" ]; then
             if [ -d "$folder" ]; then
+                echo "change to context folder : $folder"
                 cd "$folder"
             else
                 echo "Error: Directory '$folder' not found"

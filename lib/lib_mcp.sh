@@ -40,6 +40,39 @@ mcp_server_manage() {
                     ;;
             esac
             ;;
+        # https://github.com/jparkerweb/mcp-sqlite    
+        # mcp-sqlite)
+        #     echo " -- mcp-sqlite"
+        #     if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;             
+        #     case "$action" in
+        #         "install")
+        #             echo "    Installing and Configuring"
+        #             [ ! -z "$other_arg" ] && export SQLITE_DB_PATH="$other_arg"
+        #             if [ -z "$SQLITE_DB_PATH" ]; then
+        #                 echo " -- ERROR : missing path to your sqlite database"
+        #                 echo "    Provide the path to your sqlite database as third argument of the command"
+        #                 exit 1
+        #             fi
+        #             export STELLA_ORIGINAL_SYSTEM_PATH
+        #             case "$agent_name" in
+        #                 "gc")gemini_merge_config "${IATOOLS_POOL}/mcp-servers/mcp-sqlite/gemini-cli/settings.json";;
+        #                 "oc")echo " -- ERROR : not supported";exit 1;;
+        #                 *)echo " -- ERROR : missing or unknown target $agent_name";exit 1;;
+        #             esac
+        #             echo "    Configuration has been added"
+        #             ;;
+        #         "uninstall")
+        #             echo "    Unregister mcp server from agent"
+        #             case "$agent_name" in
+        #                 "gc")gemini_remove_config "mcpServers.mcp-sqlite";;
+        #                 "oc")echo " -- ERROR : not supported";exit 1;;
+        #                 *)echo " -- ERROR : missing or unknown target $agent_name";exit 1;;
+        #             esac
+        #             echo "     Uninstalling"
+        #             PATH="${IATOOLS_NODEJS_BIN_PATH}:${STELLA_ORIGINAL_SYSTEM_PATH}" npm -y uninstall mcp-sqlite -g
+        #             ;;
+        #     esac
+        #     ;;
         desktop-commander)
             echo " -- mcp-desktop-commander"
             if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;             
@@ -58,7 +91,6 @@ mcp_server_manage() {
                     ;;
                 "uninstall")
                     echo "    Unregister mcp server from agent"
-                    rm -f "${IATOOLS_MCP_LAUNCHER_HOME}/desktop-commander"
                     case "$agent_name" in
                         "gc")gemini_remove_config "mcpServers.desktop-commander";;
                         "oc")echo " -- ERROR : not supported";exit 1;;
