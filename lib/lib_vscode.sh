@@ -69,7 +69,7 @@ vscode_path() {
                 #   Windows %APPDATA%\Code\User\settings.json
                 #   macOS $HOME/Library/Application\ Support/Code/User/settings.json
                 #   Linux $HOME/.config/Codee/User/settings.json
-                #   only coder (web) linux ?  $HOME/.vscode/User/settings.json
+                #   coder (web) linux : $HOME/.vscode/User/settings.json (AND $HOME/.vscode/Machine/settings.json ?)
                 case "$STELLA_CURRENT_PLATFORM" in
                     "linux") 
                         [ -d "$HOME/.vscode/User" ] && export IATOOLS_VSCODE_CONFIG_FILE="$HOME/.vscode/User/settings.json"
