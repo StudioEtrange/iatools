@@ -46,12 +46,7 @@ vscode_path() {
 
     IATOOLS_VSCODE_MODE="$target"
     if [ "$target" = "guess" ]; then
-        # we are inside a vs code remote ssh connection, so target is "remote"
-        if [ -n "$VSCODE_IPC_HOOK_CLI" ]; then
-            IATOOLS_VSCODE_MODE="remote"
-        elif [ -d "$IATOOLS_VSCODE_ALL_SERVERS_ROOT" ]; then
-            IATOOLS_VSCODE_MODE="remote"
-        elif [ -d "$IATOOLS_VSCODE_SERVER_HOME" ]; then
+        if [ -d "$IATOOLS_VSCODE_ALL_SERVERS_ROOT" ]; then
             IATOOLS_VSCODE_MODE="remote"
         else
             IATOOLS_VSCODE_MODE="local"
