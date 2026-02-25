@@ -150,6 +150,7 @@ IATools leverages the **Stella** framework for its core functionality. Stella pr
 
 * kilocode vsextension config home : $HOME/.vscode-server/data/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json
   * https://kilo.ai/docs/automate/mcp/using-in-cli
+  * sample of LLM profil registered in kilocode : 
 * process manager goreman https://github.com/mattn/goreman
 
 
