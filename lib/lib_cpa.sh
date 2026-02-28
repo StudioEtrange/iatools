@@ -65,6 +65,47 @@ cpa_info() {
     fi
 }
 
+cpa_launch() {
+    local list_args=()
+
+    if [ -f "$IATOOLS_CLIPROXYAPI_CONFIG_FILE" ]; then
+        list_args+=("--config" "$IATOOLS_CLIPROXYAPI_CONFIG_FILE")
+    fi
+
+    for arg in "$@"; do
+        list_args+=("$arg")
+    done
+
+    if [ ${#list_args[@]} -gt 0 ]; then
+        cli-proxy-api "${list_args[@]}"
+    else
+        cli-proxy-api
+    fi
+}
+
+# login management -----------------
+
+# gemini oauth 
+#  cpa_login_gemini_oauth [--project_id <your_project_id>]
+cpa_login_gemini_oauth() {
+    echo "Login to Gemini OAuth"
+    echo "The local OAuth callback uses port 8085"
+    cpa_launch --login --no-browser "$@"
+}
+
+# openai oauth
+cpa_login_openai_oauth() {
+    echo "Login to OpenAI OAuth"
+    echo "The local OAuth callback uses port 1455"
+    cpa_launch --codex-login --no-browser "$@"
+}
+
+# qwen oauth
+cpa_login_qwen_oauth() {
+    echo "Login to Qwen OAuth"
+    cpa_launch --qwen-login --no-browser "$@"
+}
+
 # generic config management -----------------
 cpa_remove_config() {
     local key_path="$1"

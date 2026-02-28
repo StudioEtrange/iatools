@@ -70,6 +70,20 @@ gemini_remove_config() {
     json_del_key_from_file "$IATOOLS_GEMINI_CONFIG_FILE" "$key_path"
 }
 
+gemini_launch() {
+    local list_args=()
+
+    for arg in "$@"; do
+        list_args+=("$arg")
+    done
+
+    if [ ${#list_args[@]} -gt 0 ]; then
+        gemini "${list_args[@]}"
+    else
+        gemini
+    fi
+}
+
 gemini_add_command() {
     local command_file="$1"
 

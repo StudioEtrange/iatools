@@ -83,36 +83,23 @@ case "$sub_command" in
         gemini_launcher_manage
 
         local folder=
-        local list_args=()
-        local dash_found=0
         case "$1" in
             "--" | "");;
             *)
                 folder="$1"
+                 if [ -n "$folder" ]; then
+                    if [ -d "$folder" ]; then
+                        echo "change to context folder : $folder"
+                        cd "$folder"
+                    else
+                        echo "Error: Directory '$folder' not found"
+                        exit 1
+                    fi
+                fi
                 shift
                 ;;
         esac
-        for arg in "$@"; do
-            if [ "$dash_found" -eq 1 ]; then
-                list_args+=("$arg")
-            elif [ "$arg" = "--" ]; then
-                dash_found=1
-            fi
-        done
-        if [ ! -z "$folder" ]; then
-            if [ -d "$folder" ]; then
-                echo "change to context folder : $folder"
-                cd "$folder"
-            else
-                echo "Error: Directory '$folder' not found"
-                exit 1
-            fi
-        fi
-        if [ ${#list_args[@]} -gt 0 ]; then
-            gemini "${list_args[@]}"
-        else
-            gemini
-        fi
+        gemini_launch "$@"
         ;;
     cmd-plan)
         case "$1" in

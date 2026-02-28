@@ -24,10 +24,11 @@ launch
 
 authenticate to gemini cli
 requirements : gemini-cli configured `./iatools gc install`
+note : The local OAuth callback for Gemini via OAuth uses port 8085.
 ```
-./iatools cpa launch -- --login --no-browser [--project_id <your_project_id>]
+./iatools cpa login gemini [--project_id <your_project_id>]
 ```
-choose google one to usee free tier with google personnal account
+choose Google One to use free tier with google personnal account
 alternative : go to http://localhost:8317/management.html go to OAuth login / Gemini CLI OAuth
 
 info

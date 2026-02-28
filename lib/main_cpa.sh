@@ -82,39 +82,45 @@ case "$sub_command" in
         cpa_launcher_manage
 
         local folder=
-        local list_args=()
-        local dash_found=0
         case "$1" in
             "--" | "");;
             *)
                 folder="$1"
+                 if [ -n "$folder" ]; then
+                    if [ -d "$folder" ]; then
+                        echo "change to context folder : $folder"
+                        cd "$folder"
+                    else
+                        echo "Error: Directory '$folder' not found"
+                        exit 1
+                    fi
+                fi
                 shift
                 ;;
         esac
-        if [ -f "$IATOOLS_CLIPROXYAPI_CONFIG_FILE" ]; then
-            list_args+=("--config" "$IATOOLS_CLIPROXYAPI_CONFIG_FILE")
-        fi
-        for arg in "$@"; do
-            if [ "$dash_found" -eq 1 ]; then
-                list_args+=("$arg")
-            elif [ "$arg" = "--" ]; then
-                dash_found=1
-            fi
-        done
-        if [ -n "$folder" ]; then
-            if [ -d "$folder" ]; then
-                echo "change to context folder : $folder"
-                cd "$folder"
-            else
-                echo "Error: Directory '$folder' not found"
+        cpa_launch "$@"
+        ;;
+    
+    login)
+        case "$1" in
+            gemini-oauth)
+                shift
+                cpa_login_gemini_oauth "${@}"
+                ;; 
+            openai-oauth)
+                shift
+                cpa_login_openai_oauth "${@}"
+                ;;
+            qwen-oauth)
+                shift
+                cpa_login_qwen_oauth "${@}"
+                ;;
+            *)
+                echo "Error: not supported $1"
+                usage
                 exit 1
-            fi
-        fi
-        if [ ${#list_args[@]} -gt 0 ]; then
-            cli-proxy-api "${list_args[@]}"
-        else
-            cli-proxy-api
-        fi
+                ;;
+        esac
         ;;
     
     *)
