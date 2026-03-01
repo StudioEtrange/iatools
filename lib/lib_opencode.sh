@@ -60,3 +60,17 @@ opencode_remove_config() {
     local key_path="$1"
     json_del_key_from_file "$IATOOLS_OPENCODE_CONFIG_FILE" "$key_path" 
 }
+
+opencode_launch() {
+    local list_args=()
+
+    for arg in "$@"; do
+        list_args+=("$arg")
+    done
+
+    if [ ${#list_args[@]} -gt 0 ]; then
+        opencode "${list_args[@]}"
+    else
+        opencode
+    fi
+}

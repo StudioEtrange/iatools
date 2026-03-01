@@ -13,7 +13,6 @@ case "$sub_command" in
         cpa_launcher_manage
         ;;
     uninstall)
-
         echo "Uninstalling CLIProxyAPI (keeping all configuration unchanged. to remove configuration use reset command)"
         $STELLA_API feature_remove "cliproxyapi" "NON_DECLARED"
 

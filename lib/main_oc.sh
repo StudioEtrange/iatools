@@ -11,6 +11,7 @@ case "$sub_command" in
         echo "Configuring Opencode CLI"
         opencode_settings_configure
         vscode_settings_configure "opencode"
+        #opencode_path_register_for_vs_terminal
         
         opencode_launcher_manage
 
@@ -78,43 +79,23 @@ case "$sub_command" in
         opencode_launcher_manage
 
         local folder=
-        local list_args=()
-        local dash_found=0
         case "$1" in
             "--" | "");;
             *)
                 folder="$1"
+                 if [ -n "$folder" ]; then
+                    if [ -d "$folder" ]; then
+                        echo "change to context folder : $folder"
+                        cd "$folder"
+                    else
+                        echo "Error: Directory '$folder' not found"
+                        exit 1
+                    fi
+                fi
                 shift
                 ;;
         esac
-        for arg in "$@"; do
-            if [ "$dash_found" -eq 1 ]; then
-                list_args+=("$arg")
-            elif [ "$arg" = "--" ]; then
-                dash_found=1
-            fi
-        done
-        case "$folder" in
-            "")
-                if [ ${#list_args[@]} -gt 0 ]; then
-                    opencode "${list_args[@]}"
-                else
-                    opencode
-                fi
-                ;;
-            *)
-                if [ -d "$folder" ]; then
-                    if [ ${#list_args[@]} -gt 0 ]; then
-                        opencode "$folder" "${list_args[@]}"
-                    else
-                        opencode "$folder"
-                    fi
-                    else
-                    echo "Error: Directory '$folder' not found"
-                    exit 1
-                fi
-                ;;
-        esac
+        opencode_launch
         ;;
     mcp)
         mcp_server_manage "$1" "$2" "$command" "$3"

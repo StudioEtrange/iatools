@@ -16,6 +16,7 @@ case "$sub_command" in
         echo "Configuring Gemini CLI"
         gemini_settings_configure
         vscode_settings_configure "gemini"
+        #gemini_path_register_for_vs_terminal
 
         gemini_launcher_manage
 

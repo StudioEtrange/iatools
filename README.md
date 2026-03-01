@@ -36,6 +36,7 @@ git clone https://github.com/StudioEtrange/iatools
 cd iatools
 ./iatools init
 ./iatools gc install
+./iatools gc register bash
 ```
 
 **Register local MCP server calculator**
