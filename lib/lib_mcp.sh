@@ -137,10 +137,10 @@ mcp_server_manage() {
             case "$action" in
                 "install")
                     echo "    Configuring"
-                    echo '#!/bin/sh' > "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
-                    echo "export PATH=\"${IATOOLS_NODEJS_BIN_PATH}:\${PATH}\"" >> "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
-                    echo "exec \"npx\" -y @upstash/context7-mcp --api-key \"\${CONTEXT7_API_KEY}\"" >> "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
-                    chmod +x "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
+                    #echo '#!/bin/sh' > "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
+                    #echo "export PATH=\"${IATOOLS_NODEJS_BIN_PATH}:\${PATH}\"" >> "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
+                    #echo "exec \"npx\" -y @upstash/context7-mcp --api-key \"\${CONTEXT7_API_KEY}\"" >> "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
+                    #chmod +x "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
 
                     [ ! -z "$other_arg" ] && export CONTEXT7_API_KEY="$other_arg"                        
                     echo "    Provided optional CONTEXT7_API_KEY : $CONTEXT7_API_KEY"
@@ -153,7 +153,7 @@ mcp_server_manage() {
                     ;;
                 "uninstall")
                     echo "    Unregister mcp server from agent"
-                    rm -f "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
+                    #rm -f "${IATOOLS_MCP_LAUNCHER_HOME}/context7"
                     case "$agent_name" in
                         "gc")gemini_remove_config "mcpServers.context7";;
                         "oc")opencode_remove_config "mcp.context7";;

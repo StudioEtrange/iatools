@@ -31,12 +31,20 @@ gemini_path_unregister_for_vs_terminal() {
 
 gemini_launcher_manage() {
     if [ -f "${IATOOLS_NODEJS_BIN_PATH}gemini" ]; then
+
+        runtime_path_files_generate
+
         echo '#!/bin/sh' > "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini"
-        echo "${IATOOLS_NODEJS_BIN_PATH}node ${IATOOLS_NODEJS_BIN_PATH}/gemini \$@" >> "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini"
+        echo ". ${IATOOLS_RUNTIME_PATH_FILE}" >> "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini"
+        echo "gemini \$@" >> "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini"
         chmod +x "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini"
 
-        # launcher based on symbolic link :
-        # link does not exist OR is not valid
+        # launcher based on a wrapper
+        # echo '#!/bin/sh' > "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini"
+        # echo "${IATOOLS_NODEJS_BIN_PATH}node ${IATOOLS_NODEJS_BIN_PATH}/gemini \$@" >> "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini"
+        # chmod +x "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini"
+
+        # launcher based on a symbolic link - test link does not exist OR is not valid
         # if [ ! -L "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini" ] || [ ! -e "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini" ]; then
         #     echo "Create a gemini launcher"
         #     ln -fsv "${IATOOLS_NODEJS_BIN_PATH}/gemini" "${IATOOLS_GEMINI_LAUNCHER_HOME}/gemini"

@@ -23,6 +23,7 @@ Usage: iatools [options]
 
 Options:
     init                    Install/Reinstall dependencies.
+    uninstall               Uninstall iatools, all tools, mcp servers and unregister everything from PATH.
     help                    Display this help message.
     shell                   Enter iatools context and path.
     ----
@@ -113,6 +114,9 @@ main() {
         init)
             iatools_init
             ;;
+        uninstall)
+            iatools_uninstall
+            ;;
         npm-config)
             if ! check_requirements "nodejs"; then echo " -- ERROR : nodejs missing, launch iatools init"; exit 1; fi;
             local sub_command="$1"
@@ -184,5 +188,6 @@ main() {
 
 iatools_path
 runtime_path
+
 
 main "$@"

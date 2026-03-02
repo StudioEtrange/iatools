@@ -3,7 +3,7 @@
   "mcp": {
     "calculator": {
       "type": "local",
-      "command": ["${IATOOLS_PYTHON_BIN_PATH}python", "-m", "mcp_server_calculator"],
+      "command": ["python", "-m", "mcp_server_calculator"],
       "enabled": true
     }
   }

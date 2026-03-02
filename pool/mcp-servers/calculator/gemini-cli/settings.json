@@ -1,7 +1,7 @@
 {
     "mcpServers": {
         "calculator": {
-            "command": "${IATOOLS_PYTHON_BIN_PATH}python",
+            "command": "python",
             "args": [
                 "-m",
                 "mcp_server_calculator"

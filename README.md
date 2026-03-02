@@ -152,6 +152,13 @@ IATools leverages the **Stella** framework for its core functionality. Stella pr
 * kilocode vsextension config home : $HOME/.vscode-server/data/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json
   * https://kilo.ai/docs/automate/mcp/using-in-cli
 * process manager goreman https://github.com/mattn/goreman
+* MCP-cli
+  * https://github.com/IBM/mcp-cli
+  * CLI to connect and interact with MCP (Model Context Protocol) servers.
+  * Manages conversation, tool invocation, session handling.
+  * Supports chat, interactive shell, and automation via MCP.
+  * Integrates with LLMs for reasoning and tool-based workflows.
+
 
 
 ## Contributors

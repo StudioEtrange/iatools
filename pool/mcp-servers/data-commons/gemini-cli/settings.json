@@ -1,7 +1,7 @@
 {
     "mcpServers": {
         "data-commons": {
-            "command": "${IATOOLS_PYTHON_BIN_PATH}uvx",
+            "command": "uvx",
             "args": [
                 "datacommons-mcp@latest",
                 "serve",

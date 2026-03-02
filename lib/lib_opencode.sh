@@ -31,12 +31,19 @@ opencode_path_unregister_for_vs_terminal() {
 
 opencode_launcher_manage() {
     if [ -f "${IATOOLS_NODEJS_BIN_PATH}opencode" ]; then
-        # launcher based on a symbolic link :
-        # link does not exist OR is not valid
-        if [ ! -L "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode" ] || [ ! -e "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode" ]; then
-            echo "Create an opencode launcher"
-            ln -fsv "${IATOOLS_NODEJS_BIN_PATH}opencode" "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode"
-        fi
+        
+        runtime_path_files_generate
+
+        echo '#!/bin/sh' > "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode"
+        echo ". ${IATOOLS_RUNTIME_PATH_FILE}" >> "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode"
+        echo "opencode \$@" >> "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode"
+        chmod +x "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode"
+
+        # launcher based on a symbolic link - test link does not exist OR is not valid
+        # if [ ! -L "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode" ] || [ ! -e "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode" ]; then
+        #     echo "Create an opencode launcher"
+        #     ln -fsv "${IATOOLS_NODEJS_BIN_PATH}opencode" "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode"
+        # fi
     else
         rm -f "${IATOOLS_OPENCODE_LAUNCHER_HOME}/opencode"
     fi

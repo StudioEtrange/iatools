@@ -13,6 +13,10 @@ iatools_path() {
     export IATOOLS_ISOLATED_DEPENDENCIES_ROOT="${STELLA_APP_WORK_ROOT}/isolated_dependencies"
     mkdir -p "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}"
 
+    export IATOOLS_RUNTIME_PATH_FILE="${STELLA_APP_WORK_ROOT}/path/runtime_path.sh"
+    mkdir -p "${STELLA_APP_WORK_ROOT}/path"
+
+
     gemini_path
     opencode_path
     vscode_path
@@ -40,7 +44,18 @@ runtime_path() {
         # we use an already installed python, not iatools python
         export IATOOLS_PYTHON_BIN_PATH=""
     fi
+}
 
+runtime_path_files_generate() {
+    # create files to add runtime dependencies needed fpr any tool to run
+    echo '#!/bin/sh' > "${IATOOLS_RUNTIME_PATH_FILE}"
+    [ -n "$IATOOLS_NODEJS_BIN_PATH" ] && echo "export PATH=\"${IATOOLS_NODEJS_BIN_PATH}:\${PATH}\"" >> "${IATOOLS_RUNTIME_PATH_FILE}"
+    [ -n "$IATOOLS_PYTHON_BIN_PATH" ] && echo "export PATH=\"${IATOOLS_PYTHON_BIN_PATH}:\${PATH}\"" >> "${IATOOLS_RUNTIME_PATH_FILE}"
+    chmod +x "${IATOOLS_RUNTIME_PATH_FILE}"
+}
+
+runtime_path_files_remove() {
+    rm -f "${IATOOLS_RUNTIME_PATH_FILE}"
 }
 
 iatools_install_dependency() {
@@ -101,6 +116,9 @@ iatools_install_dependencies() {
     for f in $STELLA_APP_FEATURE_LIST; do
         iatools_install_dependency "$f"
     done
+
+    # generate runtime path files with dependencies path to use them in launchers and other tools
+    runtime_path_files_generate
 }
 
 
@@ -109,6 +127,8 @@ iatools_remove_dependencies() {
     rm -Rf "${IATOOLS_ISOLATED_DEPENDENCIES_ROOT}"
     # remove dependencies
     rm -Rf "${STELLA_APP_FEATURE_ROOT}"
+
+    runtime_path_files_remove
 }
 
 
@@ -117,7 +137,20 @@ iatools_init() {
     iatools_install_dependencies
 }
 
+iatools_uninstall() {
+    gemini_path_unregister_for_shell "all"
+    gemini_path_unregister_for_vs_terminal
+    opencode_path_unregister_for_shell "all"
+    opencode_path_unregister_for_vs_terminal
+    
+    iatools_remove_dependencies
+    runtime_path_files_remove
 
+    rm -Rf "${IATOOLS_MCP_LAUNCHER_HOME}"
+    rm -Rf "${IATOOLS_LAUNCHER_HOME}"
+
+    rm -Rf "${STELLA_APP_WORK_ROOT}"
+}
 
 # add a path at PATH env variable list when a shell launch
 path_register_for_shell() {
